@@ -4,7 +4,7 @@ Hệ thống Đặt lịch khám sức khỏe (HealthCareBooking) là một nề
 
 ---
 
-## 📊 Công Nghệ Sử Dụng (Tech Stack)
+##  Công Nghệ Sử Dụng (Tech Stack)
 
 | Thành phần | Công nghệ | Chi tiết sử dụng |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ Hệ thống Đặt lịch khám sức khỏe (HealthCareBooking) là một nề
 
 ---
 
-## 🛠️ Yêu Cầu Hệ Thống (Prerequisites)
+## Yêu Cầu Hệ Thống (Prerequisites)
 
 Trước khi khởi chạy dự án, hãy đảm bảo máy tính của bạn (khuyến nghị môi trường Ubuntu/Linux) đã cài đặt đầy đủ các công cụ sau:
 
@@ -28,7 +28,7 @@ Trước khi khởi chạy dự án, hãy đảm bảo máy tính của bạn (k
 
 ---
 
-## 🚀 Cài Đặt và Khởi Chạy (Installation & Setup)
+## Cài Đặt và Khởi Chạy (Installation & Setup)
 
 ### 1. Cấu hình Cơ sở dữ liệu (Database)
 
@@ -68,7 +68,7 @@ npm run dev
 
 ---
 
-## 🧪 Tài Liệu Kiểm Thử (Testing Guide)
+## Tài Liệu Kiểm Thử (Testing Guide)
 
 Hệ thống được tích hợp hai tầng kiểm thử độc lập nhằm đảm bảo cả tính đúng đắn về mặt logic lẫn độ tin cậy về mặt hiệu năng.
 
@@ -107,7 +107,7 @@ npx k6 run api_perf_env/stress_test.js
 
 ---
 
-## 💡 Bài Học Kỹ Thuật & Tối Ưu Hóa (Engineering Insights)
+## Bài Học Kỹ Thuật & Tối Ưu Hóa (Engineering Insights)
 
 Qua các đợt kiểm thử hiệu năng diện rộng, hệ thống đã phát hiện và xử lý thành công hai nút thắt cổ chai hệ thống (Bottlenecks) chí mạng:
 
@@ -133,7 +133,7 @@ server.tomcat.threads.max=500
 
 ---
 
-## 📌 Hướng Phát Triển Tương Lai (Future Enhancements)
+##  Hướng Phát Triển Tương Lai (Future Enhancements)
 
 * **Real-time Slot Locking:** Tích hợp giao thức **WebSockets (STOMP)** kết hợp bộ nhớ đệm **Redis** để triển khai tính năng giữ chỗ tạm thời trong 5 phút. Khi User A đang chọn một khung giờ, hệ thống sẽ ngay lập tức bôi xám slot đó trên màn hình của User B theo thời gian thực, tối ưu hóa trải nghiệm người dùng (UX).
 * **Distributed Lock:** Áp dụng khóa phân tán để xử lý triệt để hiện tượng Deadlock tầng Database khi có hàng ngàn lệnh ghi đồng thời vào một bản ghi dữ liệu đơn lẻ.
