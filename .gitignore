@@ -1,0 +1,31 @@
+# Các file của Java (Spring Boot)
+**/target/
+**/.mvn/
+*.jar
+*.class
+
+# Các thư viện của Node.js (React / Playwright / K6)
+**/node_modules/
+
+# File cấu hình của các IDE (IntelliJ, VS Code, Eclipse)
+**/.idea/
+**/.vscode/
+*.iml
+.project
+.settings/
+
+# File log và biến môi trường
+*.log
+**/.env
+**/.env.local
+.DS_Store
+
+# Các file báo cáo sinh ra khi chạy test
+**/playwright-report/
+**/test-results/
+**/blob-report/
+runtimes/
+videos/
+*.rar
+*.mp4
+*.zip
