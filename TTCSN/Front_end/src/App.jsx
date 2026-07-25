@@ -37,6 +37,7 @@ import PatientPage from "./components/Admin/BenhNhan/PatientPage.jsx";
 import DoctorHistoryPage from "./components/DoctorManager/HistoryAppointment/DoctorHistoryPage.jsx";
 import AdminHistoryPage from "./components/Admin/LichSuKham/AdminHistoryPage.jsx"
 import PaymentResult from "./pages/PaymentResult.jsx";
+import AIChatBot from "./components/AIChatBot.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -102,6 +103,8 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    
+    // <AIChatBot/>
   )
 }
 

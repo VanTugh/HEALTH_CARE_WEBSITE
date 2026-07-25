@@ -108,6 +108,7 @@ public class SecurityConfig {
 
 				// Configure authorization
 				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/api/ai/**").permitAll()
 
 						// ✅ VNPay
 						.requestMatchers("/api/payments/vnpay/return", "/api/payments/vnpay/ipn").permitAll()
@@ -117,9 +118,13 @@ public class SecurityConfig {
 						"/swagger-ui.html", "/api/bookings/test/**")
 				.permitAll()
 
+				.requestMatchers("/api/bac-si-2/**").permitAll()
+				.requestMatchers("/api/dat-lich", "/api/dat-lich/**").permitAll()
+
 						// ✅ Public GET endpoints
 						.requestMatchers(org.springframework.http.HttpMethod.GET, "/api/specialties/**",
 								"/api/degrees/**", "/api/doctors/**",
+								"/api/facilities/**",
 
 								// 👇 QUAN TRỌNG: mở GET cho cơ sở y tế
 								"/co-so-y-te/**")
