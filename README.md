@@ -137,3 +137,82 @@ server.tomcat.threads.max=500
 
 * **Real-time Slot Locking:** Tích hợp giao thức **WebSockets (STOMP)** kết hợp bộ nhớ đệm **Redis** để triển khai tính năng giữ chỗ tạm thời trong 5 phút. Khi User A đang chọn một khung giờ, hệ thống sẽ ngay lập tức bôi xám slot đó trên màn hình của User B theo thời gian thực, tối ưu hóa trải nghiệm người dùng (UX).
 * **Distributed Lock:** Áp dụng khóa phân tán để xử lý triệt để hiện tượng Deadlock tầng Database khi có hàng ngàn lệnh ghi đồng thời vào một bản ghi dữ liệu đơn lẻ.
+
+## Hướng dẫn setup AI pipeline
+**Bước 1: Đảm bảo khi clone đã có thêm các file, thư mục như sau**
+```bash
+- Frontend: components/AIChatbot.jsx
+- Backend:
+    + java:
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/controller/AIController.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/controller/BacSiController2.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/controller/DatLichController.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/dto/request/ChatRequest.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/dto/request/DatLichRequest.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/dto/response/SlotRanhResponse.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/service/BacSiService2.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/service/DatLichService.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/service/DoctorService.java
+        - HEALTH_CARE_WEBSITE/TTCSN/Back_end/src/main/java/org/example/demo/service/RAGService.java
+    + python:
+        - 4 file ai_service, db_services.py, rag_service.py, vector_service.py trong thư mục ai_assistant
+```
+**Bước 2: tạo key**
+```bash
+trong thư mục ai_assistant tạo file .env có nội dung sau:
+
+DB_URL = "mysql+pymysql://thang:123456@localhost:3306/DatLichKham" # thay thành đường dẫn db của bạn
+
+GOOGLE_API_KEY="Your_key" # thay thành key AI gemini của bạn (lưu ý cần đảm bảo chắc chắn key có thể hoạt động được)
+```
+**Bước 3: Tạo thêm bảng mới trong db để lưu embedding sử dụng cho rag**
+```bash
+truy cập vào file HEALTH_CARE_WEBSITE/TTCSN/Back_end/GuiChoTung.sql để tìm câu lệnh tạo bảng BacSiEmbedding hoặc chạy lệnh dưới
+
+CREATE TABLE IF NOT EXISTS BacSiEmbedding (
+    EmbeddingID INT AUTO_INCREMENT PRIMARY KEY,
+    BacSiID INT NOT NULL UNIQUE, -- Mỗi bác sĩ có 1 vector đại diện
+    
+    -- Lưu mảng Vector dưới dạng JSON Array: [0.012, -0.045, ...]
+    Embedding JSON NOT NULL, 
+    
+    -- Đoạn văn bản tổng hợp đã dùng để Embedding (phục vụ kiểm tra/debug)
+    DocumentText TEXT, 
+    
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (BacSiID) REFERENCES BacSi(BacSiID) ON DELETE CASCADE,
+    CONSTRAINT chk_json_embedding CHECK (JSON_VALID(Embedding))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+**Bước 4: Insert dữ liệu bác sĩ để test**
+```bash
+tìm trong file HEALTH_CARE_WEBSITE/TTCSN/Back_end/GuiChoTung.sql phần và chạy tất cả các câu lệnh insert phía sau (lưu ý chạy từng lệnh insert một không chạy hết 1 lần)
+
+# -- ---------------------------------------------------
+# -- ----------------- THÊM DỮ LIỆU ĐỂ TEST RAG --------
+# -- ---------------------------------------------------
+```
+**Bước 5: Tạo embedding bằng python**
+```bash
+Mở file vector_service.py trong thư mục ai_assistant kéo xuống cuối thấy đoạn này
+# Đồng bộ dữ liệu trước (nếu chưa thực hiện)
+# vector_service.sync_doctors_to_vector_db()
+-> thì bỏ dấu thăng đi và chạy lệnh python:
+    - cd và thư mực ai_assistant
+    - chạy: python vector_service.py
+```
+**Bước 6: test chức năng AI bằng CLI trước**
+```bash
+đảm bảo đường dẫn bắt đầu bằng ai_assistant #  ví dụ: thang@PhatToNhuLai:~/workspace/test/HEALTH_CARE_WEBSITE/TTCSN/ai_assistant$
+
+chạy lệnh: python rag_service.py
+```
+**Bước 7: Test full pileline**
+```bash
+mở 3 terminal cho FE - BE - AI
+lưu ý với AI
+    - cd vào ai_assistant
+    - chạy python ai_service.py
+```
