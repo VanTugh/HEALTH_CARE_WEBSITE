@@ -1,0 +1,44 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: health-db
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: DatLichKham
+    volumes:
+      - ./mysql/DatLichKham.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./Back_end
+    container_name: health-be
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/DatLichKham
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+
+  frontend:
+    build: ./Front_end
+    container_name: health-fe
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: always
+    command: http backend:8080
+    environment:
+      NGROK_AUTHTOKEN: "378hRDvUSMTojqcEOfTKBh3I6hf_5eaanSwEw2DsunFHnTJ6u"
+    depends_on:
+      - backend

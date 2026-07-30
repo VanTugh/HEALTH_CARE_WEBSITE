@@ -1,0 +1,317 @@
+import khoa1 from "../../../assets/images/specialty/s1.png";
+import khoa2 from "../../../assets/images/specialty/s2.png";
+
+// --- Cơ sở y tế ---
+const medicalCenters = [
+  {
+    id: 1,
+    name: "Trung Tâm Y Khoa Việt Đức",
+    address: "Nam Từ Liêm - Hà Nội",
+    phoneNumber: "0987654321",
+    doctorCount: 10,
+  },
+  {
+    id: 2,
+    name: "Bệnh Viện Bạch Mai",
+    address: "Đống Đa - Hà Nội",
+    phoneNumber: "02438693731",
+    doctorCount: 25,
+  },
+  {
+    id: 3,
+    name: "Phòng Khám Đa Khoa Hoàn Mỹ",
+    address: "Quận 3 - TP. Hồ Chí Minh",
+    phoneNumber: "02839309999",
+    doctorCount: 15,
+  },
+  {
+    id: 4,
+    name: "Trung Tâm Y Tế Quận 1",
+    address: "Quận 1 - TP. Hồ Chí Minh",
+    phoneNumber: "02838212345",
+    doctorCount: 12,
+  },
+  {
+    id: 5,
+    name: "Bệnh Viện Trung Ương Huế",
+    address: "Thừa Thiên Huế",
+    phoneNumber: "02343822222",
+    doctorCount: 30,
+  },
+  {
+    id: 6,
+    name: "Phòng Khám Đa Khoa An Khang",
+    address: "Cầu Giấy - Hà Nội",
+    phoneNumber: "02437912345",
+    doctorCount: 8,
+  },
+  {
+    id: 7,
+    name: "Trung Tâm Y Khoa Hòa Hảo",
+    address: "Quận 10 - TP. Hồ Chí Minh",
+    phoneNumber: "02839557979",
+    doctorCount: 20,
+  },
+  {
+    id: 8,
+    name: "Bệnh Viện Phụ Sản Hà Nội",
+    address: "Hai Bà Trưng - Hà Nội",
+    phoneNumber: "02438523252",
+    doctorCount: 18,
+  },
+  {
+    id: 9,
+    name: "Bệnh Viện Chợ Rẫy",
+    address: "Quận 5 - TP. Hồ Chí Minh",
+    phoneNumber: "02838554137",
+    doctorCount: 40,
+  },
+  {
+    id: 10,
+    name: "Phòng Khám Quốc Tế Victoria",
+    address: "Quận 7 - TP. Hồ Chí Minh",
+    phoneNumber: "02837712345",
+    doctorCount: 10,
+  },
+  {
+    id: 11,
+    name: "Bệnh Viện E",
+    address: "Cầu Giấy - Hà Nội",
+    phoneNumber: "02437543650",
+    doctorCount: 22,
+  },
+  {
+    id: 12,
+    name: "Trung Tâm Y Tế Quận Bình Thạnh",
+    address: "Bình Thạnh - TP. Hồ Chí Minh",
+    phoneNumber: "02835512345",
+    doctorCount: 14,
+  },
+  {
+    id: 13,
+    name: "Bệnh Viện Nhi Trung Ương",
+    address: "Đống Đa - Hà Nội",
+    phoneNumber: "02462738573",
+    doctorCount: 28,
+  },
+  {
+    id: 14,
+    name: "Phòng Khám Đa Khoa Medic",
+    address: "Quận 10 - TP. Hồ Chí Minh",
+    phoneNumber: "02839270284",
+    doctorCount: 16,
+  },
+  {
+    id: 15,
+    name: "Bệnh Viện Đa Khoa Thái Bình",
+    address: "Thái Bình",
+    phoneNumber: "02273812345",
+    doctorCount: 12,
+  },
+  {
+    id: 16,
+    name: "Bệnh Viện Ung Bướu TP.HCM",
+    address: "Bình Thạnh - TP. Hồ Chí Minh",
+    phoneNumber: "02838433041",
+    doctorCount: 35,
+  },
+  {
+    id: 17,
+    name: "Bệnh Viện Da Liễu Hà Nội",
+    address: "Hoàn Kiếm - Hà Nội",
+    phoneNumber: "02438433422",
+    doctorCount: 11,
+  },
+  {
+    id: 18,
+    name: "Trung Tâm Y Tế Quận 9",
+    address: "TP. Thủ Đức - TP. Hồ Chí Minh",
+    phoneNumber: "02837303322",
+    doctorCount: 9,
+  },
+  {
+    id: 19,
+    name: "Bệnh Viện Đa Khoa Đà Nẵng",
+    address: "Đà Nẵng",
+    phoneNumber: "02363822345",
+    doctorCount: 27,
+  },
+  {
+    id: 20,
+    name: "Phòng Khám Đa Khoa Tân Bình",
+    address: "Tân Bình - TP. Hồ Chí Minh",
+    phoneNumber: "02838112345",
+    doctorCount: 13,
+  },
+];
+
+// --- Chuyên khoa ---
+const specialties = [
+  {
+    id: "Khoa1",
+    name: "Cơ Xương Khớp",
+    desc: "Bác sĩ Cơ Xương Khớp giỏi",
+    image: khoa1,
+    medicalId: 1,
+  },
+  {
+    id: "Khoa2",
+    name: "Thần Kinh",
+    desc: "Chẩn đoán và điều trị các bệnh về thần kinh",
+    image: khoa2,
+    medicalId: 2,
+  },
+  {
+    id: "Khoa3",
+    name: "Tiêu Hóa",
+    desc: "Khám và điều trị các bệnh về tiêu hóa",
+    image: khoa1,
+    medicalId: 3,
+  },
+  {
+    id: "Khoa4",
+    name: "Tim Mạch",
+    desc: "Khám và điều trị các bệnh về tim mạch",
+    image: khoa2,
+    medicalId: 5,
+  },
+  {
+    id: "Khoa5",
+    name: "Hô Hấp",
+    desc: "Khám và điều trị các bệnh về hô hấp",
+    image: khoa1,
+    medicalId: 9,
+  },
+  {
+    id: "Khoa6",
+    name: "Da Liễu",
+    desc: "Chăm sóc và điều trị các bệnh về da",
+    image: khoa2,
+    medicalId: 17,
+  },
+  {
+    id: "Khoa7",
+    name: "Nhi Khoa",
+    desc: "Khám và điều trị bệnh cho trẻ em",
+    image: khoa1,
+    medicalId: 13,
+  },
+  {
+    id: "Khoa8",
+    name: "Sản Phụ Khoa",
+    desc: "Khám và điều trị phụ khoa",
+    image: khoa1,
+    medicalId: 3,
+  },
+];
+
+// --- Dịch vụ ---
+const services = [
+  {
+    id: 1,
+    name: "Khám tổng quát",
+    price: 500000,
+    duration: 30,
+    specialtyId: "Khoa1",
+  },
+  {
+    id: 2,
+    name: "Khám tim mạch",
+    price: 700000,
+    duration: 45,
+    specialtyId: "Khoa4",
+  },
+  {
+    id: 3,
+    name: "Khám tai mũi họng",
+    price: 400000,
+    duration: 25,
+    specialtyId: "Khoa3",
+  },
+  {
+    id: 4,
+    name: "Khám mắt",
+    price: 350000,
+    duration: 20,
+    specialtyId: "Khoa2",
+  },
+  {
+    id: 5,
+    name: "Khám nội tiết",
+    price: 650000,
+    duration: 40,
+    specialtyId: "Khoa5",
+  },
+  {
+    id: 6,
+    name: "Khám da liễu",
+    price: 300000,
+    duration: 20,
+    specialtyId: "Khoa6",
+  },
+  {
+    id: 7,
+    name: "Khám thần kinh",
+    price: 800000,
+    duration: 60,
+    specialtyId: "Khoa2",
+  },
+  {
+    id: 8,
+    name: "Khám sản phụ khoa",
+    price: 600000,
+    duration: 40,
+    specialtyId: "Khoa8",
+  },
+  {
+    id: 9,
+    name: "Khám hô hấp",
+    price: 450000,
+    duration: 30,
+    specialtyId: "Khoa5",
+  },
+  {
+    id: 10,
+    name: "Khám tiêu hóa",
+    price: 550000,
+    duration: 35,
+    specialtyId: "Khoa3",
+  },
+];
+
+// --- Bác sĩ ---
+const doctors = [
+  {
+    id: 1,
+    name: "Nguyễn Văn A",
+    desc: "Bác sĩ nội tổng quát 10 năm kinh nghiệm",
+    schedule: "Thứ 2 - Thứ 6, 8:00 - 17:00",
+    specialtyId: "Khoa1",
+    medicalId: 1,
+    phoneNumber: "0987654321",
+    status: "active",
+  },
+  {
+    id: 2,
+    name: "Trần Thị B",
+    desc: "Chuyên khoa thần kinh",
+    schedule: "Thứ 2 - Thứ 7, 7:30 - 16:30",
+    specialtyId: "Khoa2",
+    medicalId: 2,
+    phoneNumber: "0912345678",
+    status: "active",
+  },
+  {
+    id: 3,
+    name: "Lê Văn C",
+    desc: "Chuyên khoa tiêu hóa",
+    schedule: "Thứ 3 - Chủ Nhật, 9:00 - 18:00",
+    specialtyId: "Khoa3",
+    medicalId: 3,
+    phoneNumber: "0905123456",
+    status: "inactive",
+  },
+  // … thêm các bác sĩ còn lại giống như data của bạn
+];
+
+export { medicalCenters, specialties, services, doctors };
