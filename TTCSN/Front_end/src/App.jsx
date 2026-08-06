@@ -38,73 +38,76 @@ import DoctorHistoryPage from "./components/DoctorManager/HistoryAppointment/Doc
 import AdminHistoryPage from "./components/Admin/LichSuKham/AdminHistoryPage.jsx"
 import PaymentResult from "./pages/PaymentResult.jsx";
 import AIChatBot from "./components/AIChatBot.jsx";
+import DiabetesPredict from "./components/DiabetesPrediction.jsx"
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        // Trang chu
-        <Route path="/" element={<Home />} />
-        <Route path="/athousepage" element={<AtHousePage />} />
-        <Route path="/athopitalpage" element={<AtHopitalPage />} />
-        <Route path="/athealthlife" element={<HealthLifePage />} />
-        <Route path="/loginpage" element={<PageLogin />} />
-        <Route path="/userpage" element={<UserPage />} />
-        <Route path="/specialtypage" element={<SpecialtyPage />} />
-        <Route path="/doctorpage" element={<DoctorPage />} />
-        <Route path="/remotepage" element={<RemotePage />} />
-        <Route path="/medicalpage" element={<Medical_Page />} />
-        <Route path="/forgotpassword" element={<ForgotPassword />} />
-        <Route path="/authotp" element={<AuthOTP />} />
-        <Route path="/authchangepass" element={<AuthChangePass />} />
-        <Route path="/emailverification" element={<EmailVerification />} />
-        <Route path="/search" element={<SearchInfor />} />
-        <Route path="/hopital" element={<HealthcareCenterCard />} />
-        <Route path="/payment-result" element={<PaymentResult />} />
-        // small page
-        <Route path="/doctor/:id" element={<Doctor />} />
-        <Route path="/chuyenkhoa/:id" element={<SpecialtyDetailPage />} />
-        <Route path="/dat-lich" element={<AppointmentBooking />} />
+    // <BrowserRouter>
+    //   <Routes>
+    //     // Trang chu
+    //     <Route path="/" element={<Home />} />
+    //     <Route path="/athousepage" element={<AtHousePage />} />
+    //     <Route path="/athopitalpage" element={<AtHopitalPage />} />
+    //     <Route path="/athealthlife" element={<HealthLifePage />} />
+    //     <Route path="/loginpage" element={<PageLogin />} />
+    //     <Route path="/userpage" element={<UserPage />} />
+    //     <Route path="/specialtypage" element={<SpecialtyPage />} />
+    //     <Route path="/doctorpage" element={<DoctorPage />} />
+    //     <Route path="/remotepage" element={<RemotePage />} />
+    //     <Route path="/medicalpage" element={<Medical_Page />} />
+    //     <Route path="/forgotpassword" element={<ForgotPassword />} />
+    //     <Route path="/authotp" element={<AuthOTP />} />
+    //     <Route path="/authchangepass" element={<AuthChangePass />} />
+    //     <Route path="/emailverification" element={<EmailVerification />} />
+    //     <Route path="/search" element={<SearchInfor />} />
+    //     <Route path="/hopital" element={<HealthcareCenterCard />} />
+    //     <Route path="/payment-result" element={<PaymentResult />} />
+    //     // small page
+    //     <Route path="/doctor/:id" element={<Doctor />} />
+    //     <Route path="/chuyenkhoa/:id" element={<SpecialtyDetailPage />} />
+    //     <Route path="/dat-lich" element={<AppointmentBooking />} />
 
-        // Doctor
-        <Route
-          path="/bacsi"
-          element={
-            <ProtectedDoctorRoute>
-              <DoctorManagerPage />
-            </ProtectedDoctorRoute>
-          }
-        >
-          <Route index element={<DoctorInfor />} />
-          <Route path="infor" element={<DoctorInfor />} />
-          <Route path="schedule" element={<MyLeavePage />} />
-          <Route path="appointment" element={<CustomerBookingPage />} />
-          <Route path="meetings" element={<DoctorBookingPageConfirmed />} />
-          <Route path="history" element={<DoctorHistoryPage />} />
-        </Route>
+    //     // Doctor
+    //     <Route
+    //       path="/bacsi"
+    //       element={
+    //         <ProtectedDoctorRoute>
+    //           <DoctorManagerPage />
+    //         </ProtectedDoctorRoute>
+    //       }
+    //     >
+    //       <Route index element={<DoctorInfor />} />
+    //       <Route path="infor" element={<DoctorInfor />} />
+    //       <Route path="schedule" element={<MyLeavePage />} />
+    //       <Route path="appointment" element={<CustomerBookingPage />} />
+    //       <Route path="meetings" element={<DoctorBookingPageConfirmed />} />
+    //       <Route path="history" element={<DoctorHistoryPage />} />
+    //     </Route>
 
-        // Admin
-        <Route
-          path="/admin"
-          element={
-            <ProtectedAdminRoute>
-              <AdminPage />
-            </ProtectedAdminRoute>
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="medical" element={<MedicalPage />} />
-          <Route path="specialties" element={<SpecialtiesPage />} />
-          <Route path="doctors" element={<DoctorsPage />} />
-          <Route path="services" element={<PatientPage />} />
-          <Route path="appointments" element={<ScheduleTimetable />} />
-          <Route path="degree" element={<TrinhDoPage />} />
-          <Route path="leave" element={<DoctorLeavePage />} />
-          <Route path="history" element={<AdminHistoryPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    //     // Admin
+    //     <Route
+    //       path="/admin"
+    //       element={
+    //         <ProtectedAdminRoute>
+    //           <AdminPage />
+    //         </ProtectedAdminRoute>
+    //       }
+    //     >
+    //       <Route index element={<Dashboard />} />
+    //       <Route path="medical" element={<MedicalPage />} />
+    //       <Route path="specialties" element={<SpecialtiesPage />} />
+    //       <Route path="doctors" element={<DoctorsPage />} />
+    //       <Route path="services" element={<PatientPage />} />
+    //       <Route path="appointments" element={<ScheduleTimetable />} />
+    //       <Route path="degree" element={<TrinhDoPage />} />
+    //       <Route path="leave" element={<DoctorLeavePage />} />
+    //       <Route path="history" element={<AdminHistoryPage />} />
+    //     </Route>
+    //   </Routes>
+    // </BrowserRouter>
     
-    // <AIChatBot/>
+    <AIChatBot/>
+    // <DiabetesPredict />
   )
 }
 

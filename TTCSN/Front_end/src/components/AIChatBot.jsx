@@ -1,6 +1,6 @@
 import React, { useState } from "react";
+import DiabetesPredict from "../components/DiabetesPrediction"; // Import tiện ích dự đoán tiểu đường
 
-// ⚙️ Cấu hình chế độ: 'dev' (chạy mockdata) hoặc 'production' (gọi API thật)
 const DEV_MODE = import.meta.env.VITE_DEV_MODE || "dev"; 
 
 const AIChatBot = () => {
@@ -8,15 +8,17 @@ const AIChatBot = () => {
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // State quản lý việc hiển thị Popup dự đoán tiểu đường
+    const [showDiabetesModal, setShowDiabetesModal] = useState(false);
+
     // State lưu dữ liệu người dùng đang chọn
     const [bookingData, setBookingData] = useState({
         bacSiId: null,
         ngayKham: "",
-        selectedSlot: null, // Lưu slot được chọn, VD: { ca: "SANG", gioKham: "08:30 - 09:00" }
+        selectedSlot: null,
         lyDoKham: ""
     });
 
-    // State lưu danh sách ca/khung giờ RẢNH của bác sĩ được trả về
     const [availableSlots, setAvailableSlots] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
 
@@ -24,13 +26,10 @@ const AIChatBot = () => {
         {
             id: 1,
             sender: "bot",
-            text: "Xin chào 👋 Tôi là AI tư vấn y tế. Hãy mô tả triệu chứng của bạn để tôi gợi ý bác sĩ phù hợp nhé!"
+            text: "Xin chào 👋 Tôi là AI tư vấn y tế. Hãy mô tả triệu chứng của bạn hoặc sử dụng tiện ích bên dưới để được hỗ trợ!"
         }
     ]);
 
-    // --------------------------------------------------------------------------
-    // 1. MOCK APIS
-    // --------------------------------------------------------------------------
     const mockAiChatApi = async (userMsg) => {
         await new Promise((res) => setTimeout(res, 1000));
         return {
@@ -45,10 +44,8 @@ const AIChatBot = () => {
         };
     };
 
-    // Mock API lấy lịch rảnh của Bác sĩ theo Ngày
     const mockGetDoctorScheduleApi = async (bacSiId, ngay) => {
         await new Promise((res) => setTimeout(res, 600));
-        // Giả lập danh sách các khung giờ RẢNH thực tế của Bác sĩ
         return [
             { id: 1, ca: "SANG", gioKham: "08:00 - 08:30" },
             { id: 2, ca: "SANG", gioKham: "09:30 - 10:00" },
@@ -65,12 +62,9 @@ const AIChatBot = () => {
         };
     };
 
-    // --------------------------------------------------------------------------
-    // 2. HÀM LẤY LỊCH RẢNH CỦA BÁC SĨ TỪ BACKEND
-    // --------------------------------------------------------------------------
     const fetchDoctorSchedule = async (bacSiId, selectedDate) => {
         setLoadingSlots(true);
-        setBookingData(prev => ({ ...prev, selectedSlot: null })); // Reset slot cũ
+        setBookingData(prev => ({ ...prev, selectedSlot: null }));
         try {
             let slots = [];
             if (DEV_MODE === "dev") {
@@ -79,7 +73,6 @@ const AIChatBot = () => {
                 const token = localStorage.getItem("accessToken");
                 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-                // Gọi API Java kiểm tra slot trống
                 const response = await fetch(
                     `${API_BASE_URL}/api/bac-si-2/${bacSiId}/lich-ranh?ngay=${selectedDate}`,
                     {
@@ -98,9 +91,6 @@ const AIChatBot = () => {
         }
     };
 
-    // --------------------------------------------------------------------------
-    // 3. GỬI TIN NHẮN TƯ VẤN AI
-    // --------------------------------------------------------------------------
     const sendMessage = async () => {
         if (!message.trim()) return;
 
@@ -141,7 +131,6 @@ const AIChatBot = () => {
                 }
             ]);
 
-            // Nếu gợi ý Bác sĩ -> Mặc định chọn ngày hôm nay & tự động load lịch rảnh
             if (data.recommendedDoctor) {
                 const today = new Date().toISOString().split("T")[0];
                 setBookingData({
@@ -150,7 +139,6 @@ const AIChatBot = () => {
                     selectedSlot: null,
                     lyDoKham: userMessage
                 });
-                // Tải lịch trống của bác sĩ ngày hôm nay
                 fetchDoctorSchedule(data.recommendedDoctor.id, today);
             }
         } catch (e) {
@@ -163,16 +151,12 @@ const AIChatBot = () => {
         }
     };
 
-    // Xử lý khi user đổi ngày khám
     const handleDateChange = (e, bacSiId) => {
         const newDate = e.target.value;
         setBookingData(prev => ({ ...prev, ngayKham: newDate }));
         fetchDoctorSchedule(bacSiId, newDate);
     };
 
-    // --------------------------------------------------------------------------
-    // 4. LƯU LỊCH KHÁM XUỐNG DB
-    // --------------------------------------------------------------------------
     const handleConfirmBooking = async (msgId, doctor) => {
         if (!bookingData.selectedSlot) {
             alert("Vui lòng chọn một khung giờ còn trống!");
@@ -208,7 +192,6 @@ const AIChatBot = () => {
                 res = await response.json();
             }
 
-            // Đặt xong -> Cập nhật tin nhắn báo thành công
             setMessages((prev) =>
                 prev.map((msg) =>
                     msg.id === msgId
@@ -220,7 +203,7 @@ const AIChatBot = () => {
                         : msg
                 )
             );
-            alert("Đặt lịch thành công")
+            alert("Đặt lịch thành công");
         } catch (error) {
             alert("Đã có lỗi xảy ra khi đặt lịch!");
         } finally {
@@ -262,7 +245,7 @@ const AIChatBot = () => {
                         bottom: 90,
                         right: 20,
                         width: 390,
-                        height: 570,
+                        height: 580,
                         background: "#fff",
                         borderRadius: 12,
                         display: "flex",
@@ -289,6 +272,38 @@ const AIChatBot = () => {
                         <span style={{ fontSize: 11, background: "#ffffff33", padding: "2px 6px", borderRadius: 4 }}>
                             {DEV_MODE.toUpperCase()}
                         </span>
+                    </div>
+
+                    {/* Thanh tiện ích nhanh (Quick Utilities Toolbar) */}
+                    <div
+                        style={{
+                            padding: "8px 12px",
+                            background: "#f5f5f5",
+                            borderBottom: "1px solid #e0e0e0",
+                            display: "flex",
+                            gap: 8,
+                            overflowX: "auto"
+                        }}
+                    >
+                        <button
+                            onClick={() => setShowDiabetesModal(true)}
+                            style={{
+                                background: "#e0f2f1",
+                                color: "#00796b",
+                                border: "1px solid #b2dfdb",
+                                padding: "4px 10px",
+                                borderRadius: 16,
+                                fontSize: 12,
+                                fontWeight: "600",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                                whiteSpace: "nowrap"
+                            }}
+                        >
+                            🩺 Sàng lọc tiểu đường
+                        </button>
                     </div>
 
                     {/* Chat Messages */}
@@ -449,6 +464,11 @@ const AIChatBot = () => {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Popup Dự đoán nguy cơ tiểu đường */}
+            {showDiabetesModal && (
+                <DiabetesPredict onClose={() => setShowDiabetesModal(false)} />
             )}
         </>
     );
