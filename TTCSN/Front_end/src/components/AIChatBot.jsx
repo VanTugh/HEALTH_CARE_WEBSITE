@@ -1,17 +1,15 @@
-import React, { useState } from "react";
-import DiabetesPredict from "../components/DiabetesPrediction"; // Import tiện ích dự đoán tiểu đường
+import React, { useState, useEffect, useRef } from "react";
+import DiabetesPredict from "../components/DiabetesPrediction";
 
-const DEV_MODE = import.meta.env.VITE_DEV_MODE || "dev"; 
+const DEV_MODE = import.meta.env.VITE_DEV_MODE || "dev";
 
 const AIChatBot = () => {
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
-
-    // State quản lý việc hiển thị Popup dự đoán tiểu đường
     const [showDiabetesModal, setShowDiabetesModal] = useState(false);
+    const messagesEndRef = useRef(null);
 
-    // State lưu dữ liệu người dùng đang chọn
     const [bookingData, setBookingData] = useState({
         bacSiId: null,
         ngayKham: "",
@@ -22,14 +20,28 @@ const AIChatBot = () => {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
 
+    // Khởi tạo tin nhắn mặc định chứa Extension
     const [messages, setMessages] = useState([
         {
             id: 1,
             sender: "bot",
-            text: "Xin chào 👋 Tôi là AI tư vấn y tế. Hãy mô tả triệu chứng của bạn hoặc sử dụng tiện ích bên dưới để được hỗ trợ!"
+            text: "Xin chào 👋 Tôi là Trợ lý AI Tư vấn Y tế.\n\nBạn có thể mô tả các triệu chứng sức khỏe đang gặp phải để tôi tư vấn bác sĩ phù hợp, hoặc trải nghiệm tiện ích mở rộng bên dưới để kiểm tra sức khỏe nhanh nhé!",
+            hasExtension: true // Flag để render giao diện tiện ích
         }
     ]);
 
+    // Tự động cuộn xuống tin nhắn mới nhất
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        if (open) {
+            scrollToBottom();
+        }
+    }, [messages, open]);
+
+    // Mock API (giữ nguyên logic cũ)
     const mockAiChatApi = async (userMsg) => {
         await new Promise((res) => setTimeout(res, 1000));
         return {
@@ -64,7 +76,7 @@ const AIChatBot = () => {
 
     const fetchDoctorSchedule = async (bacSiId, selectedDate) => {
         setLoadingSlots(true);
-        setBookingData(prev => ({ ...prev, selectedSlot: null }));
+        setBookingData((prev) => ({ ...prev, selectedSlot: null }));
         try {
             let slots = [];
             if (DEV_MODE === "dev") {
@@ -72,12 +84,9 @@ const AIChatBot = () => {
             } else {
                 const token = localStorage.getItem("accessToken");
                 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
                 const response = await fetch(
                     `${API_BASE_URL}/api/bac-si-2/${bacSiId}/lich-ranh?ngay=${selectedDate}`,
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
+                    { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (!response.ok) throw new Error("Không lấy được lịch bác sĩ");
                 slots = await response.json();
@@ -107,7 +116,6 @@ const AIChatBot = () => {
             } else {
                 const token = localStorage.getItem("accessToken");
                 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
                 const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
                     method: "POST",
                     headers: {
@@ -144,17 +152,11 @@ const AIChatBot = () => {
         } catch (e) {
             setMessages((prev) => [
                 ...prev,
-                { id: Date.now(), sender: "bot", text: "Xin lỗi, AI đang bận." }
+                { id: Date.now(), sender: "bot", text: "Xin lỗi, AI đang bận. Vui lòng thử lại sau." }
             ]);
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleDateChange = (e, bacSiId) => {
-        const newDate = e.target.value;
-        setBookingData(prev => ({ ...prev, ngayKham: newDate }));
-        fetchDoctorSchedule(bacSiId, newDate);
     };
 
     const handleConfirmBooking = async (msgId, doctor) => {
@@ -172,7 +174,6 @@ const AIChatBot = () => {
             } else {
                 const token = localStorage.getItem("accessToken");
                 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
                 const response = await fetch(`${API_BASE_URL}/api/dat-lich`, {
                     method: "POST",
                     headers: {
@@ -203,7 +204,6 @@ const AIChatBot = () => {
                         : msg
                 )
             );
-            alert("Đặt lịch thành công");
         } catch (error) {
             alert("Đã có lỗi xảy ra khi đặt lịch!");
         } finally {
@@ -212,265 +212,198 @@ const AIChatBot = () => {
     };
 
     return (
-        <>
-            {/* Nút mở Chatbot */}
-            <div
+        <div className="font-sans">
+            {/* Nút Float Mở Chatbot */}
+            <button
                 onClick={() => setOpen(!open)}
-                style={{
-                    position: "fixed",
-                    right: 20,
-                    bottom: 20,
-                    width: 60,
-                    height: 60,
-                    borderRadius: "50%",
-                    background: "#1976d2",
-                    color: "#fff",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    cursor: "pointer",
-                    fontSize: 28,
-                    zIndex: 9999,
-                    boxShadow: "0 4px 12px rgba(0,0,0,.25)"
-                }}
+                className="fixed right-6 bottom-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-3xl shadow-xl z-[9999] transition-transform hover:scale-105"
             >
                 🤖
-            </div>
+            </button>
 
-            {/* Khung Chat */}
+            {/* Khung Chatbot */}
             {open && (
-                <div
-                    style={{
-                        position: "fixed",
-                        bottom: 90,
-                        right: 20,
-                        width: 390,
-                        height: 580,
-                        background: "#fff",
-                        borderRadius: 12,
-                        display: "flex",
-                        flexDirection: "column",
-                        boxShadow: "0 5px 25px rgba(0,0,0,.2)",
-                        overflow: "hidden",
-                        zIndex: 9999,
-                        fontFamily: "sans-serif"
-                    }}
-                >
+                <div className="fixed bottom-24 right-6 w-[380px] h-[600px] bg-slate-50 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-[9999] border border-slate-200">
+                    
                     {/* Header */}
-                    <div
-                        style={{
-                            background: "#1976d2",
-                            color: "#fff",
-                            padding: "12px 15px",
-                            fontWeight: "bold",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center"
-                        }}
-                    >
-                        <span>🤖 AI Tư Vấn & Đặt Lịch</span>
-                        <span style={{ fontSize: 11, background: "#ffffff33", padding: "2px 6px", borderRadius: 4 }}>
-                            {DEV_MODE.toUpperCase()}
-                        </span>
+                    <div className="bg-blue-600 text-white px-4 py-3 flex justify-between items-center shadow-sm z-10">
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">🤖</span>
+                            <div>
+                                <h3 className="font-bold text-sm">Trợ lý AI Y Tế</h3>
+                                <p className="text-[10px] text-blue-100">Luôn sẵn sàng hỗ trợ bạn</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[9px] bg-blue-800/50 px-2 py-1 rounded-md font-mono uppercase">
+                                {DEV_MODE}
+                            </span>
+                            <button onClick={() => setOpen(false)} className="text-blue-100 hover:text-white text-xl leading-none">
+                                &times;
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Thanh tiện ích nhanh (Quick Utilities Toolbar) */}
-                    <div
-                        style={{
-                            padding: "8px 12px",
-                            background: "#f5f5f5",
-                            borderBottom: "1px solid #e0e0e0",
-                            display: "flex",
-                            gap: 8,
-                            overflowX: "auto"
-                        }}
-                    >
-                        <button
-                            onClick={() => setShowDiabetesModal(true)}
-                            style={{
-                                background: "#e0f2f1",
-                                color: "#00796b",
-                                border: "1px solid #b2dfdb",
-                                padding: "4px 10px",
-                                borderRadius: 16,
-                                fontSize: 12,
-                                fontWeight: "600",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 4,
-                                whiteSpace: "nowrap"
-                            }}
-                        >
-                            🩺 Sàng lọc tiểu đường
-                        </button>
-                    </div>
-
-                    {/* Chat Messages */}
-                    <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+                    {/* Chat Body */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
                         {messages.map((m) => (
-                            <div
-                                key={m.id}
-                                style={{
-                                    textAlign: m.sender === "user" ? "right" : "left",
-                                    marginBottom: 12
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        display: "inline-block",
-                                        padding: "10px 14px",
-                                        borderRadius: 12,
-                                        maxWidth: "85%",
-                                        whiteSpace: "pre-line",
-                                        background: m.sender === "user" ? "#1976d2" : "#f0f2f5",
-                                        color: m.sender === "user" ? "#fff" : "#1c1e21",
-                                        fontSize: 14,
-                                        lineHeight: "1.4"
-                                    }}
-                                >
-                                    {m.text}
-                                </span>
-
-                                {/* Khung gợi ý Bác sĩ & Lịch rảnh */}
-                                {m.doctor && (
-                                    <div
-                                        style={{
-                                            border: "1px solid #e0e0e0",
-                                            borderRadius: 10,
-                                            padding: 12,
-                                            marginTop: 8,
-                                            background: "#fafafa",
-                                            textAlign: "left"
-                                        }}
-                                    >
-                                        <div style={{ fontWeight: "bold", color: "#1976d2" }}>
-                                            {m.doctor.avatar} {m.doctor.name}
-                                        </div>
-                                        <div style={{ fontSize: 12, color: "#666" }}>{m.doctor.specialty}</div>
-                                        <div style={{ fontSize: 12, color: "#d32f2f", fontWeight: "bold", marginTop: 2 }}>
-                                            Giá khám: {m.doctor.price.toLocaleString()} VNĐ
-                                        </div>
-
-                                        <hr style={{ margin: "8px 0", border: "0.5px solid #eee" }} />
-
-                                        {/* 1. Chọn Ngày */}
-                                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                            <label style={{ fontSize: 12, fontWeight: 600 }}>1. Chọn ngày muốn khám:</label>
-                                            <input
-                                                type="date"
-                                                value={bookingData.ngayKham}
-                                                min={new Date().toISOString().split("T")[0]}
-                                                onChange={(e) => handleDateChange(e, m.doctor.id)}
-                                                style={{ padding: 6, borderRadius: 4, border: "1px solid #ccc", fontSize: 13 }}
-                                            />
-                                        </div>
-
-                                        {/* 2. Chọn Khung Giờ Rảnh của Bác Sĩ */}
-                                        <div style={{ marginTop: 8 }}>
-                                            <label style={{ fontSize: 12, fontWeight: 600 }}>2. Chọn giờ bác sĩ rảnh:</label>
-                                            
-                                            {loadingSlots ? (
-                                                <div style={{ fontSize: 12, color: "#666", margin: "6px 0" }}>⏳ Đang tải lịch bác sĩ...</div>
-                                            ) : availableSlots.length === 0 ? (
-                                                <div style={{ fontSize: 12, color: "#d32f2f", margin: "6px 0" }}>❌ Ngày này bác sĩ không có lịch rảnh.</div>
-                                            ) : (
-                                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
-                                                    {availableSlots.map((slot) => {
-                                                        const isSelected = bookingData.selectedSlot?.id === slot.id;
-                                                        return (
-                                                            <button
-                                                                key={slot.id}
-                                                                onClick={() => setBookingData(prev => ({ ...prev, selectedSlot: slot }))}
-                                                                style={{
-                                                                    padding: "4px 8px",
-                                                                    borderRadius: 4,
-                                                                    fontSize: 12,
-                                                                    border: isSelected ? "1px solid #1976d2" : "1px solid #ccc",
-                                                                    background: isSelected ? "#1976d2" : "#fff",
-                                                                    color: isSelected ? "#fff" : "#333",
-                                                                    cursor: "pointer",
-                                                                    fontWeight: isSelected ? "bold" : "normal"
-                                                                }}
-                                                            >
-                                                                {slot.gioKham}
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Action buttons */}
-                                        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                                            <button
-                                                onClick={() => handleConfirmBooking(m.id, m.doctor)}
-                                                disabled={!bookingData.selectedSlot}
-                                                style={{
-                                                    flex: 1,
-                                                    background: bookingData.selectedSlot ? "#2e7d32" : "#ccc",
-                                                    color: "#fff",
-                                                    border: "none",
-                                                    padding: "8px 0",
-                                                    borderRadius: 6,
-                                                    cursor: bookingData.selectedSlot ? "pointer" : "not-allowed",
-                                                    fontWeight: "bold"
-                                                }}
-                                            >
-                                                Xác Nhận Đặt Lịch
-                                            </button>
-                                            <button
-                                                onClick={() => setMessages(prev => prev.map(msg => msg.id === m.id ? { ...msg, doctor: null } : msg))}
-                                                style={{
-                                                    background: "#757575",
-                                                    color: "#fff",
-                                                    border: "none",
-                                                    padding: "8px 12px",
-                                                    borderRadius: 6,
-                                                    cursor: "pointer"
-                                                }}
-                                            >
-                                                Hủy
-                                            </button>
-                                        </div>
+                            <div key={m.id} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
+                                
+                                {/* Avatar Bot (chỉ hiện nếu là bot) */}
+                                {m.sender === "bot" && (
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm mr-2 mt-1 shrink-0">
+                                        🤖
                                     </div>
                                 )}
+
+                                <div className="max-w-[85%]">
+                                    {/* Text Message */}
+                                    <div
+                                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                                            m.sender === "user"
+                                                ? "bg-blue-600 text-white rounded-tr-sm"
+                                                : "bg-white text-slate-800 shadow-sm border border-slate-100 rounded-tl-sm"
+                                        }`}
+                                    >
+                                        {m.text}
+                                    </div>
+
+                                    {/* Khối Giao diện Tiện ích mở rộng (Extension) */}
+                                    {m.hasExtension && (
+                                        <div className="mt-3 bg-white border border-teal-200 shadow-sm rounded-xl p-4 w-full">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-8 h-8 bg-teal-50 rounded-full flex items-center justify-center text-lg">
+                                                    🩺
+                                                </div>
+                                                <h4 className="font-bold text-teal-800 text-sm">Tiện ích AI Sàng Lọc</h4>
+                                            </div>
+                                            <p className="text-xs text-slate-600 mb-4">
+                                                Trả lời vài câu hỏi ngắn để hệ thống AI đánh giá nguy cơ mắc bệnh tiểu đường của bạn, từ đó có hướng phòng ngừa kịp thời.
+                                            </p>
+                                            <button
+                                                onClick={() => setShowDiabetesModal(true)}
+                                                className="w-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-2.5 rounded-lg transition-colors"
+                                            >
+                                                Mở tiện ích sàng lọc
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Khối Đặt Lịch Khám */}
+                                    {m.doctor && (
+                                        <div className="mt-3 bg-white border border-slate-200 shadow-sm rounded-xl p-4">
+                                            <div className="flex items-center gap-3 border-b border-slate-100 pb-3 mb-3">
+                                                <div className="text-3xl">{m.doctor.avatar}</div>
+                                                <div>
+                                                    <div className="font-bold text-sm text-blue-700">{m.doctor.name}</div>
+                                                    <div className="text-[11px] text-slate-500">{m.doctor.specialty}</div>
+                                                    <div className="text-[11px] text-red-600 font-bold mt-0.5">
+                                                        Phí khám: {m.doctor.price.toLocaleString()} VNĐ
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">1. Chọn ngày khám:</label>
+                                                    <input
+                                                        type="date"
+                                                        value={bookingData.ngayKham}
+                                                        min={new Date().toISOString().split("T")[0]}
+                                                        onChange={(e) => {
+                                                            setBookingData(prev => ({ ...prev, ngayKham: e.target.value }));
+                                                            fetchDoctorSchedule(m.doctor.id, e.target.value);
+                                                        }}
+                                                        className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">2. Khung giờ trống:</label>
+                                                    {loadingSlots ? (
+                                                        <div className="text-xs text-slate-500 italic">⏳ Đang tải lịch...</div>
+                                                    ) : availableSlots.length === 0 ? (
+                                                        <div className="text-xs text-red-500 italic">Kín lịch / Không có ca làm việc.</div>
+                                                    ) : (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {availableSlots.map((slot) => {
+                                                                const isSelected = bookingData.selectedSlot?.id === slot.id;
+                                                                return (
+                                                                    <button
+                                                                        key={slot.id}
+                                                                        onClick={() => setBookingData(prev => ({ ...prev, selectedSlot: slot }))}
+                                                                        className={`px-2 py-1 text-[11px] rounded transition-colors border ${
+                                                                            isSelected
+                                                                                ? "bg-blue-600 border-blue-600 text-white font-bold"
+                                                                                : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
+                                                                        }`}
+                                                                    >
+                                                                        {slot.gioKham}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex gap-2 pt-2">
+                                                    <button
+                                                        onClick={() => handleConfirmBooking(m.id, m.doctor)}
+                                                        disabled={!bookingData.selectedSlot}
+                                                        className="flex-1 bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-lg transition-colors"
+                                                    >
+                                                        Xác Nhận Đặt
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setMessages(prev => prev.map(msg => msg.id === m.id ? { ...msg, doctor: null } : msg))}
+                                                        className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors"
+                                                    >
+                                                        Hủy
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
-
                         {loading && (
-                            <div style={{ fontSize: 13, color: "#888", fontStyle: "italic" }}>
-                                ⏳ AI đang xử lý...
+                            <div className="flex justify-start">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm mr-2 mt-1 shrink-0">🤖</div>
+                                <div className="px-4 py-2.5 rounded-2xl bg-white text-slate-500 text-xs shadow-sm border border-slate-100 rounded-tl-sm flex items-center gap-1">
+                                    <span className="animate-bounce">●</span><span className="animate-bounce delay-75">●</span><span className="animate-bounce delay-150">●</span>
+                                </div>
                             </div>
                         )}
+                        <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Input Chat */}
-                    <div style={{ display: "flex", borderTop: "1px solid #ddd" }}>
+                    {/* Input Area */}
+                    <div className="bg-white border-t border-slate-200 p-3 flex gap-2 z-10">
                         <input
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Mô tả triệu chứng..."
-                            style={{ flex: 1, border: "none", padding: "12px 15px", outline: "none", fontSize: 14 }}
+                            placeholder="Mô tả triệu chứng của bạn..."
+                            className="flex-1 bg-slate-100 text-sm rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") sendMessage();
                             }}
                         />
                         <button
                             onClick={sendMessage}
-                            style={{ width: 65, border: "none", background: "#1976d2", color: "#fff", fontWeight: "bold", cursor: "pointer" }}
+                            className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center transition-colors shrink-0"
                         >
-                            Gửi
+                            ➤
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Popup Dự đoán nguy cơ tiểu đường */}
+            {/* Modal Tiểu Đường - Vẫn giữ nguyên logic cũ */}
             {showDiabetesModal && (
                 <DiabetesPredict onClose={() => setShowDiabetesModal(false)} />
             )}
-        </>
+        </div>
     );
 };
 

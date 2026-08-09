@@ -67,7 +67,6 @@ const initialForm = {
   highBP: 0,
   highChol: 0,
   cholCheck: 1,
-  bmi: "",
   smoker: 0,
   stroke: 0,
   heartDiseaseorAttack: 0,
@@ -135,25 +134,42 @@ function Select({ label, value, onChange, options }) {
 
 export default function DiabetesPredict({ onClose }) {
   const [form, setForm] = useState(initialForm);
+  const [height, setHeight] = useState(""); // Chiều cao (cm)
+  const [weight, setWeight] = useState(""); // Cân nặng (kg)
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
 
+  // Hàm tính toán BMI tự động từ Chiều cao (cm) và Cân nặng (kg)
+  const calculateBMI = () => {
+    const h = Number(height);
+    const w = Number(weight);
+    if (h > 0 && w > 0) {
+      const heightInMeters = h / 100;
+      const bmiVal = w / (heightInMeters * heightInMeters);
+      return Number(bmiVal.toFixed(1));
+    }
+    return null;
+  };
+
+  const calculatedBMI = calculateBMI();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setResult(null);
 
-    if (form.bmi === "" || Number(form.bmi) <= 0) {
-      setError("Vui lòng nhập chỉ số BMI hợp lệ.");
+    if (!calculatedBMI || calculatedBMI <= 0) {
+      setError("Vui lòng nhập chiều cao (cm) và cân nặng (kg) hợp lệ.");
       return;
     }
 
     setLoading(true);
     try {
-      const payload = { ...form, bmi: Number(form.bmi) };
+      // Đóng gói payload gửi sang API backend (giữ nguyên key 'bmi' chuẩn)
+      const payload = { ...form, bmi: calculatedBMI };
       const { data } = await axios.post(API_URL, payload);
       setResult(data);
     } catch (err) {
@@ -191,19 +207,46 @@ export default function DiabetesPredict({ onClose }) {
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
                 1. Thông tin cơ bản
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              
+              {/* Cụm nhập Chiều cao, Cân nặng & Tự động tính BMI */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3 p-3 bg-white rounded-lg border border-slate-200">
                 <label className="block">
-                  <span className="block text-xs text-slate-700 mb-1">Chỉ số BMI</span>
+                  <span className="block text-xs text-slate-700 mb-1">Chiều cao (cm)</span>
                   <input
                     type="number"
-                    step="0.1"
-                    min="1"
-                    placeholder="vd: 24.5"
-                    value={form.bmi}
-                    onChange={(e) => set("bmi")(e.target.value)}
+                    step="1"
+                    min="50"
+                    max="250"
+                    placeholder="vd: 170"
+                    value={height}
+                    onChange={(e) => setHeight(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </label>
+
+                <label className="block">
+                  <span className="block text-xs text-slate-700 mb-1">Cân nặng (kg)</span>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="20"
+                    max="300"
+                    placeholder="vd: 65"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </label>
+
+                <div className="block">
+                  <span className="block text-xs text-slate-700 mb-1">BMI tính toán</span>
+                  <div className="w-full rounded-lg border border-teal-200 bg-teal-50/50 px-2.5 py-1.5 text-xs font-semibold text-teal-700 flex items-center h-[34px]">
+                    {calculatedBMI ? `${calculatedBMI}` : "--"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Select
                   label="Giới tính"
                   value={form.sex}
@@ -233,6 +276,7 @@ export default function DiabetesPredict({ onClose }) {
                   options={GENHLTH_OPTIONS}
                 />
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                 <label className="block">
                   <span className="block text-xs text-slate-700 mb-1">

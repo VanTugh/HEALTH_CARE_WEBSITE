@@ -120,6 +120,7 @@ public class SecurityConfig {
 
 				.requestMatchers("/api/bac-si-2/**").permitAll()
 				.requestMatchers("/api/dat-lich", "/api/dat-lich/**").permitAll()
+				.requestMatchers("/api/diabetes", "/api/diabetes/**").permitAll()
 
 						// ✅ Public GET endpoints
 						.requestMatchers(org.springframework.http.HttpMethod.GET, "/api/specialties/**",
