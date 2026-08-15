@@ -73,7 +73,7 @@ const Remote = () => {
             <h2 className='text-[24px] md:text-[28px] font-semibold mb-10'>Khám từ xa</h2>
             <ul className='flex gap-4 md:gap-12 relative'>
                 {listCurrent.map((item) => (
-                    <Link key={item.id} className='flex-1 text-center rounded-2xl border border-gray-200 py-3 md:py-5'>
+                    <Link key={item.id} to="/remotepage" className='flex-1 text-center rounded-2xl border border-gray-200 py-3 md:py-5 hover:shadow-md transition-shadow cursor-pointer'>
                         <img
                             className='w-full h-[160px] md:h-[216px] object-cover mx-auto rounded-2xl'
                             src={item.image} alt={item.name}

@@ -1,7 +1,8 @@
 import React from 'react'
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 
 const HeaderSub = () => {
+    const navigate = useNavigate()
 
     return (
         <>
@@ -21,6 +22,16 @@ const HeaderSub = () => {
                             HealthCare
                         </p>
                     </Link>
+
+                    {/* Nút Quay lại */}
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-1.5 ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 transition text-gray-600 text-sm font-medium shadow-sm"
+                        title="Quay lại trang trước"
+                    >
+                        <i className="fa-solid fa-arrow-left text-xs"></i>
+                        Quay lại
+                    </button>
 
 
                     <ul className="

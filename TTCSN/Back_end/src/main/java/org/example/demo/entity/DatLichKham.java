@@ -46,8 +46,16 @@ public class DatLichKham extends BaseEntity {
     private NguoiDung benhNhan;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "NguoiThanID")
+    private NguoiThan nguoiThan;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "BacSiID", nullable = false)
     private BacSi bacSi;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "KhuyenMaiID")
+    private KhuyenMai khuyenMai;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CoSoID", nullable = false)
@@ -85,6 +93,9 @@ public class DatLichKham extends BaseEntity {
 
     @Column(name = "GiaKham", nullable = false, precision = 10, scale = 2)
     private BigDecimal giaKham;
+
+    @Column(name = "TienGiamGia", precision = 18, scale = 2)
+    private BigDecimal tienGiamGia;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "PhuongThucThanhToan", length = 20)

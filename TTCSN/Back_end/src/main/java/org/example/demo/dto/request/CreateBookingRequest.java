@@ -43,6 +43,11 @@ import java.time.LocalTime;
 @Schema(description = "Request tạo lịch khám mới")
 public class CreateBookingRequest {
     
+    // ===== THÔNG TIN KHÁM HỘ =====
+    
+    @Schema(description = "ID người thân nếu đặt lịch khám hộ (truyền null nếu tự khám)", example = "1")
+    private Integer nguoiThanID;
+
     // ===== THÔNG TIN BÁC SĨ & THỜI GIAN =====
     
     @NotNull(message = "BacSiID không được null")
@@ -112,6 +117,11 @@ public class CreateBookingRequest {
         required = true
     )
     private PhuongThucThanhToan phuongThucThanhToan;
+    
+    // ===== HỒ SƠ KHUYẾN MÃI =====
+    
+    @Schema(description = "Mã voucher giảm giá (optional)", example = "CHAO_BAN_MOI")
+    private String maKhuyenMai;
     
     // ===== OPTIONAL: HỒ SƠ BỆNH ÁN =====
     

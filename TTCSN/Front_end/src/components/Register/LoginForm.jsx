@@ -17,8 +17,8 @@ const LoginForm = ({ setShowLoginForm }) => {
             hideProgressBar: false,
         });
     };
-    const notifyError = () => {
-        toast.error(`Đăng nhập thất bại`, {
+    const notifyError = (msg) => {
+        toast.error(msg || `Đăng nhập thất bại`, {
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
@@ -61,7 +61,7 @@ const LoginForm = ({ setShowLoginForm }) => {
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error("Đăng nhập thất bại:", errorData.message);
-                    notifyError();
+                    notifyError(errorData.message);
                     return;
                 } else {
                     const data = await response.json();

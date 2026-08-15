@@ -119,7 +119,7 @@ public class SecurityConfig {
 
 						// ✅ Public GET endpoints
 						.requestMatchers(org.springframework.http.HttpMethod.GET, "/api/specialties/**",
-								"/api/degrees/**", "/api/doctors/**",
+								"/api/degrees/**", "/api/doctors/**", "/api/v1/posts/**",
 
 								// 👇 QUAN TRỌNG: mở GET cho cơ sở y tế
 								"/co-so-y-te/**")

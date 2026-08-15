@@ -7,6 +7,7 @@ import ChangePassword from '../components/User/ChangePassword';
 import BookingItem from '../components/User/BookingItem';
 import CancelBookingModal from '../components/User/CancelBookingModal';
 import MedicalHistory from '../components/User/MedicalHistory';
+import RelativeRecords from '../components/User/RelativeRecords';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -153,6 +154,12 @@ const UserPage = () => {
                         Lịch sử khám
                     </Link>
                     <Link
+                        className={`${indexPage === 4 ? "border-[#bb4d00] bg-[#f2edea] text-amber-800" : "border-gray-400"} py-3 px-4 border-l-4 hover:bg-gray-100 rounded-[4px] font-medium`}
+                        onClick={() => setIndexPage(4)}
+                    >
+                        Hồ sơ khám hộ
+                    </Link>
+                    <Link
                         className={`${indexPage === 2 ? "border-[#bb4d00] bg-[#f2edea] text-amber-800" : "border-gray-400"} py-3 px-4 border-l-4 hover:bg-gray-100 rounded-[4px] font-medium`}
                         onClick={() => setIndexPage(2)}
                     >
@@ -223,6 +230,8 @@ const UserPage = () => {
                     {indexPage === 2 && <ChangePassword />}
 
                     {indexPage === 3 && <MedicalHistory />}
+
+                    {indexPage === 4 && <RelativeRecords />}
                 </div>
             </div>
 

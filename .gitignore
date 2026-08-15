@@ -29,3 +29,9 @@ videos/
 *.rar
 *.mp4
 *.zip
+
+# Các file SQL fix cá nhân / dữ liệu bổ sung
+**/Fix_Admin.sql
+**/Fix_SafeMode.sql
+**/Insert_BacSi.sql
+

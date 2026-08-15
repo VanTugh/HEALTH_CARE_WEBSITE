@@ -8,7 +8,8 @@ const Ask = () => {
 
             <ul className='flex flex-wrap gap-6 md:gap-12 w-full justify-center md:justify-start'>
                 <Link
-                    className='w-full sm:w-[48%] md:w-[400px] text-center rounded-2xl border border-gray-200 p-4 md:py-5'
+                    to="/remotepage"
+                    className='w-full sm:w-[48%] md:w-[400px] text-center rounded-2xl border border-gray-200 p-4 md:py-5 hover:shadow-md transition-shadow cursor-pointer'
                 >
                     <img
                         className='w-full h-[160px] sm:h-[180px] md:h-[216px] object-cover mx-auto rounded-lg'
@@ -21,7 +22,8 @@ const Ask = () => {
                 </Link>
 
                 <Link
-                    className='w-full sm:w-[48%] md:w-[400px] text-center rounded-2xl border border-gray-200 p-4 md:py-5'
+                    to="/remotepage"
+                    className='w-full sm:w-[48%] md:w-[400px] text-center rounded-2xl border border-gray-200 p-4 md:py-5 hover:shadow-md transition-shadow cursor-pointer'
                 >
                     <img
                         className='w-full h-[160px] sm:h-[180px] md:h-[216px] object-cover mx-auto rounded-lg'

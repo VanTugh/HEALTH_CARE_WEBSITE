@@ -39,19 +39,17 @@ const CancelBookingModal = ({ open, onClose, datLichID, onSuccess }) => {
                 }
             );
 
-            if (!res.ok) throw new Error();
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.message || "Huỷ lịch thất bại");
+            }
 
             toast.success("Huỷ lịch khám thành công");
             onSuccess?.(datLichID);
             onClose();
             resetForm();
-        } catch {
-            toast.error(
-                <div>
-                    Huỷ lịch thất bại.<br />
-                    Phải hủy trước 24 giờ so với giờ khám.
-                </div>
-            );
+        } catch (err) {
+            toast.error(err.message || "Huỷ lịch thất bại");
         } finally {
             setLoading(false);
             setSubmitting(false);
