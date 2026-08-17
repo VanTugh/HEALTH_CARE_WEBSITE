@@ -5,6 +5,7 @@ import org.example.demo.dto.request.BaiVietRequest;
 import org.example.demo.dto.response.BaiVietResponse;
 import org.example.demo.entity.BaiViet;
 import org.example.demo.repository.BaiVietRepository;
+import org.example.demo.repository.NguoiDungRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,6 +15,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BaiVietService {
     private final BaiVietRepository baiVietRepository;
+    private final NguoiDungRepository nguoiDungRepository;
+
+    private BaiVietResponse mapToResponse(BaiViet bv) {
+        BaiVietResponse res = BaiVietResponse.of(bv);
+        if (bv.getNguoiTaoID() != null) {
+            nguoiDungRepository.findById(bv.getNguoiTaoID())
+                .ifPresent(u -> res.setTenNguoiTao(u.getHoTen()));
+        } else {
+            res.setTenNguoiTao("Quản trị viên HealthCare");
+        }
+        return res;
+    }
 
     public List<BaiVietResponse> getAll(String phanLoai) {
         List<BaiViet> articles;
@@ -22,7 +35,7 @@ public class BaiVietService {
         } else {
             articles = baiVietRepository.findByIsDeletedFalseOrderByCreatedAtDesc();
         }
-        return articles.stream().map(BaiVietResponse::of).collect(Collectors.toList());
+        return articles.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     public BaiVietResponse getById(Integer id) {
@@ -30,7 +43,7 @@ public class BaiVietService {
         // Tăng lượt xem lên 1 khi người dùng click vào xem
         bv.setLuotXem(bv.getLuotXem() + 1);
         baiVietRepository.save(bv);
-        return BaiVietResponse.of(bv);
+        return mapToResponse(bv);
     }
 
     public BaiVietResponse create(BaiVietRequest request) {

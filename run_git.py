@@ -9,7 +9,7 @@ try:
     print(subprocess.getoutput("git add ."))
     
     print("\nRunning git commit...")
-    print(subprocess.getoutput('git commit -m "feat: Đặt lịch hộ, quản lý Voucher (phần trăm giảm giá) và hệ thống Blog CMS cho người dùng & Admin"'))
+    print(subprocess.getoutput('git commit -m "fix: Cập nhật giao diện TOC, loại bỏ emoji, gán tác giả cho Hệ thống Blog CMS"'))
     
     print("\nRunning git push...")
     print(subprocess.getoutput("git push origin phung_tuan_anh"))
