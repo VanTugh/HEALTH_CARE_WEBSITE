@@ -1,51 +1,52 @@
-# HEALTH_CARE_WEBSITE - Hệ Thống Đặt Lịch Khám Sức Khỏe trực Tuyến
+# 🏥 HEALTH_CARE_WEBSITE - Hệ Thống Đặt Lịch Khám Sức Khỏe & Trợ Lý Y Tế AI
 
-Hệ thống Đặt lịch khám sức khỏe (HealthCareBooking) là một nền tảng web toàn diện cho phép bệnh nhân tìm kiếm, chọn lựa và đặt lịch hẹn với các bác sĩ chuyên khoa theo thời gian thực. Hệ thống được xây dựng trên kiến trúc phân tầng vững chắc, hỗ trợ khả năng xử lý đồng thời cao và tích hợp sẵn bộ công cụ kiểm thử tự động (E2E Testing) cùng kiểm thử hiệu năng (Performance/Stress Testing).
+**HealthCareBooking** là một nền tảng web toàn diện cho phép bệnh nhân tìm kiếm, chọn lựa và đặt lịch hẹn với các bác sĩ chuyên khoa theo thời gian thực. Đặc biệt, hệ thống được tích hợp hệ sinh thái Trợ lý Y tế Trí tuệ Nhân tạo (AI RAG Chatbot & Mô hình Machine Learning chẩn đoán bệnh), được xây dựng trên kiến trúc phân tầng vững chắc, hỗ trợ khả năng xử lý đồng thời cao.
+
+Dự án tích hợp sẵn bộ công cụ kiểm thử tự động (E2E Testing) cùng kiểm thử hiệu năng (Performance/Stress Testing) để đảm bảo độ tin cậy tuyệt đối.
 
 ---
 
-##  Công Nghệ Sử Dụng (Tech Stack)
+## 💻 Công Nghệ Sử Dụng (Tech Stack)
 
 | Thành phần | Công nghệ | Chi tiết sử dụng |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | **Backend** | Java 17, Spring Boot 3.x | Spring Web, Spring Data JPA, Hibernate, Spring Security (JWT) |
-| **Database** | MySQL 8.0 | Quản lý thực thể, ràng buộc dữ liệu, kết nối qua Port `3307` |
-| **Frontend** | React, Vite | Giao diện người dùng SPA năng động, xử lý trạng thái real-time |
-| **Automation Test** | Playwright | Kiểm thử luồng giao diện đầu cuối (E2E) cho 10 chức năng đặc tả |
-| **Performance Test** | K6 (JavaScript) | Kiểm thử sức chịu tải đột biến (Spike/Stress Test) hệ thống |
+| **Frontend** | React, Vite, Tailwind CSS | Giao diện người dùng SPA năng động, xử lý trạng thái real-time |
+| **Database** | MySQL 8.0 | Quản lý thực thể, ràng buộc dữ liệu, lưu trữ Vector Embedding |
+| **AI RAG Service**| Python, Flask, Gemini API | Xử lý NLP, Vector Search, tạo sinh câu trả lời tư vấn y tế (Port 5000) |
+| **AI ML Service** | Python, FastAPI, XGBoost | Mô hình Machine Learning dự đoán nguy cơ tiểu đường (Port 8000) |
+| **Auto Test** | Playwright | Kiểm thử luồng giao diện đầu cuối (E2E) cho các chức năng cốt lõi |
+| **Perf Test** | K6 (JavaScript) | Kiểm thử sức chịu tải đột biến (Spike/Stress Test) hệ thống |
 
 ---
 
-## Yêu Cầu Hệ Thống (Prerequisites)
+## ⚙️ Yêu Cầu Hệ Thống (Prerequisites)
 
-Trước khi khởi chạy dự án, hãy đảm bảo máy tính của bạn (khuyến nghị môi trường Ubuntu/Linux) đã cài đặt đầy đủ các công cụ sau:
-
-* **Java Development Kit (JDK):** Phiên bản 17
-* **Node.js:** Phiên bản 22.x hoặc mới hơn (kèm `npm`)
-* **Apache Maven:** Phiên bản 3.8+
-* **MySQL Server:** Cấu hình chạy trên Port `3307` (hoặc thay đổi tương ứng trong file cấu hình)
-* **K6:** Đã cài đặt global hoặc chạy qua `npx k6`
+Hãy đảm bảo máy tính của bạn đã cài đặt đầy đủ các công cụ sau:
+*   **Java Development Kit (JDK):** Phiên bản 17
+*   **Node.js:** Phiên bản 22.x hoặc mới hơn (kèm npm)
+*   **Python:** Phiên bản 3.9+ (kèm `pip` và `venv`)
+*   **Apache Maven:** Phiên bản 3.8+
+*   **MySQL Server:** Đang chạy ở Port `3306` hoặc `3307`.
 
 ---
 
-## Cài Đặt và Khởi Chạy (Installation & Setup)
+## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy (Installation & Setup)
 
-### 1. Cấu hình Cơ sở dữ liệu (Database)
+Để chạy Full Pipeline của hệ thống, bạn cần khởi động 4 trạm dịch vụ (mở 4 tab Terminal song song).
 
-Khởi động MySQL Server trên máy cục bộ, tạo một cơ sở dữ liệu mới có tên trùng với cấu hình hệ thống (ví dụ: `DatLichKham`).
-Mở tệp `TTCSN/Back_end/src/main/resources/application.properties` và xác bối cấu hình kết nối:
-
-```properties
-spring.datasource.url=jdbc:mysql://127.0.0.1:3307/DatLichKham
-spring.datasource.username=YOUR_USERNAME
-spring.datasource.password=YOUR_PASSWORD
+### Trạm 1: Cấu Hình & Khởi Chạy Database + Backend (Java)
+1. Khởi động MySQL Server, tạo database có tên `DatLichKham`.
+2. Chạy file script SQL để khởi tạo bảng và chèn dữ liệu mẫu (đảm bảo bao gồm cả bảng `BacSiEmbedding`).
+3. Cấu hình kết nối DB tại `TTCSN/Back_end/src/main/resources/application.properties`:
+   ```properties
+   spring.datasource.url=jdbc:mysql://127.0.0.1:3307/DatLichKham
+   spring.datasource.username=YOUR_USERNAME
+   spring.datasource.password=YOUR_PASSWORD
 
 ```
 
-### 2. Khởi chạy Backend (Spring Boot)
-
-Di chuyển vào thư mục dự án Backend, thực hiện biên dịch và chạy ứng dụng:
-
+4. Di chuyển vào thư mục Backend và chạy ứng dụng:
 ```bash
 cd TTCSN/Back_end
 mvn clean package -DskipTests
@@ -53,31 +54,96 @@ mvn spring-boot:run
 
 ```
 
-Backend sẽ khởi chạy mặc định tại địa chỉ: `http://localhost:8080`
 
-### 3. Khởi chạy Frontend (React)
+*👉 Backend chạy tại: `http://localhost:8080*`
 
-Di chuyển vào thư mục chứa mã nguồn Frontend, cài đặt các gói thư viện phụ thuộc và khởi động môi trường phát triển:
+### Trạm 2: Khởi Chạy AI RAG Chatbot (Python Flask)
 
+1. Mở Terminal mới, di chuyển vào thư mục `ai_assistant`:
+```bash
+cd TTCSN/ai_assistant
+
+```
+
+
+2. Tạo file `.env` và điền cấu hình (lưu ý Port DB phải khớp với cấu hình Backend):
+```env
+DB_URL="mysql+pymysql://YOUR_USERNAME:YOUR_PASSWORD@localhost:3307/DatLichKham"
+GOOGLE_API_KEY="YOUR_GEMINI_API_KEY"
+
+```
+
+
+3. Tạo môi trường ảo và cài đặt thư viện:
+```bash
+python -m venv .venv
+# Windows:
+.\.venv\Scripts\activate
+# Linux/Mac:
+source .venv/bin/activate
+
+pip install -r requirements.txt
+
+```
+
+
+4. **Đồng bộ Dữ liệu Bác sĩ thành Vector (Chỉ làm lần đầu):** Mở file `vector_service.py`, bỏ comment dòng `# vector_service.sync_doctors_to_vector_db()` ở cuối file. Chạy lệnh: `python vector_service.py`. Sau khi đồng bộ xong, nhớ comment lại dòng đó.
+5. Khởi động Chatbot Server:
+```bash
+python ai_service.py
+
+```
+
+
+*👉 RAG AI chạy tại: `http://localhost:5000*`
+
+### Trạm 3: Khởi Chạy AI Dự đoán Tiểu đường (Python FastAPI)
+
+1. Mở Terminal mới, di chuyển vào thư mục `ai_ml`:
+```bash
+cd TTCSN/ai_ml
+
+```
+
+
+2. Kích hoạt môi trường ảo (tương tự Trạm 2) và cài đặt thư viện nếu cần.
+3. Khởi chạy server FastAPI:
+```bash
+uvicorn api:app --port 8000
+
+```
+
+
+*👉 Machine Learning AI chạy tại: `http://localhost:8000*`
+
+### Trạm 4: Khởi Chạy Frontend (React)
+
+1. Mở Terminal mới, di chuyển vào thư mục Frontend:
 ```bash
 cd TTCSN/Front_end
+
+```
+
+
+2. Cài đặt thư viện và khởi động Vite:
+```bash
 npm install
 npm run dev
 
 ```
 
+
+*👉 Giao diện chạy tại: `http://localhost:5173*`
+
 ---
 
-## Tài Liệu Kiểm Thử (Testing Guide)
+## 🧪 Tài Liệu Kiểm Thử (Testing Guide)
 
-Hệ thống được tích hợp hai tầng kiểm thử độc lập nhằm đảm bảo cả tính đúng đắn về mặt logic lẫn độ tin cậy về mặt hiệu năng.
+Hệ thống được tích hợp hai tầng kiểm thử độc lập:
 
-### 1. Kiểm Thử Tự Động Giao Diện (E2E Automation Testing với Playwright)
+### 1. Kiểm Thử Tự Động Giao Diện (E2E Playwright)
 
-Playwright được lựa chọn nhờ tốc độ thực thi script tối ưu và giao diện UI trực quan. Bộ kiểm thử bao gồm các kịch bản kiểm thử luồng chức năng cơ bản (Happy Path) cho **10 chức năng cốt lõi** được đề cập trong tài liệu đặc tả hệ thống.
-
-* **Chức năng trọng tâm:** `UC005: Xác nhận lịch khám` (Dành cho vai trò Bác sĩ). Kịch bản xử lý thông minh các trạng thái Dropdown React, tự động phát hiện và bỏ qua các nút bấm đã bị vô hiệu hóa (`:not([disabled])`) khi slot khám đã xử lý trước đó.
-* **Cách khởi chạy bộ Test tự động:**
+Bộ kiểm thử bao gồm các kịch bản kiểm thử luồng chức năng cơ bản (Happy Path) cho 10 chức năng cốt lõi. Nổi bật là xử lý thông minh các trạng thái Dropdown React, tự động phát hiện và bỏ qua các nút bấm đã bị vô hiệu hóa khi slot khám đã đầy.
 
 ```bash
 # Chạy ở chế độ giao diện UI trực quan
@@ -90,11 +156,7 @@ npx playwright test
 
 ### 2. Kiểm Thử Hiệu Năng Đột Biến (Spike/Stress Testing với K6)
 
-Kịch bản được thiết kế nhằm mô phỏng tình huống khắc nghiệt trong thực tế: **Một bác sĩ có ID số 45 rất được săn đón, và có 500 bệnh nhân đồng loạt truy cập vào hệ thống trong cùng một giây để tranh nhau đặt lịch hẹn.**
-
-* **Chi tiết kịch bản (`stress_test.js`):** Giả lập **500 người dùng ảo (VUs)** liên tục gửi yêu cầu đặt lịch trong vòng **30 giây**.
-* **Cơ chế chống Cache (Bypass Cache):** Script sử dụng hàm `Math.random()` kết hợp nối chuỗi `Timestamp` thời gian thực vào trường lý do khám, ép buộc tầng JPA/Hibernate phải thực thi lệnh `INSERT` ghi mới trực tiếp xuống ổ đĩa, loại bỏ hoàn toàn cơ chế Query Cache của Database.
-* **Cách khởi chạy bài test hiệu năng:**
+Giả lập 500 người dùng ảo (VUs) liên tục gửi yêu cầu đặt lịch trong vòng 30 giây vào cùng một slot khám. Script sử dụng cơ chế Bypass Cache để ép buộc tầng JPA/Hibernate thực thi trực tiếp xuống Database.
 
 ```bash
 # Chạy script chẩn đoán lỗi nhanh với 10 VUs
@@ -107,33 +169,29 @@ npx k6 run api_perf_env/stress_test.js
 
 ---
 
-## Bài Học Kỹ Thuật & Tối Ưu Hóa (Engineering Insights)
+## 💡 Bài Học Kỹ Thuật & Tối Ưu Hóa (Engineering Insights)
 
-Qua các đợt kiểm thử hiệu năng diện rộng, hệ thống đã phát hiện và xử lý thành công hai nút thắt cổ chai hệ thống (Bottlenecks) chí mạng:
+Qua các đợt kiểm thử hiệu năng diện rộng, hệ thống đã giải quyết thành công 2 nút thắt cổ chai (Bottlenecks):
 
-### 1. Nút thắt cổ chai ở tầng ORM (Hibernate EAGER Fetching Bottleneck)
+1. **Nút thắt tầng ORM (Hibernate EAGER Fetching):** Khi 500 VUs truy cập, thời gian phản hồi nghẽn lên tới 15s do Hibernate thực hiện phép JOIN 5 bảng lãng phí.
+* *Giải pháp:* Chuyển sang sử dụng `getReferenceById()` của Spring Data JPA để tạo Proxy Object, giải phóng toàn bộ băng thông CPU.
 
-* **Vấn đề phát hiện:** Khi 500 VUs dồn dập gửi yêu cầu, hệ thống bị nghẽn thời gian phản hồi lên tới hơn 15 giây. Log hệ thống tiết lộ Hibernate sinh ra câu lệnh `SELECT` khổng lồ, tự động thực hiện phép `JOIN` 5 bảng dữ liệu (`BacSi`, `NguoiDung`, `ChuyenKhoa`, `CoSoYTe`, `TrinhDo`) một cách lãng phí chỉ để kiểm tra sự tồn tại của ID Bác sĩ.
-* **Giải pháp khắc phục:** Chuyển đổi từ cơ chế tải dữ liệu tức thì sang việc sử dụng hàm **`getReferenceById()`** của Spring Data JPA. Hàm này tạo ra một thực thể ảo (Proxy Object) chứa khóa ngoại mà không cần truy vấn đọc dữ liệu, giúp giải phóng hoàn toàn băng thông CPU của Database.
 
-### 2. Nút thắt cổ chai ở tầng Cấu hình kết nối (Connection Pool Exhaustion)
+2. **Nút thắt Cấu hình kết nối (Connection Pool Exhaustion):** Cấu hình HikariCP mặc định chỉ có 10 kết nối, gây lỗi Timeout hàng loạt.
+* *Giải pháp:* Điều chỉnh `maximum-pool-size=100` và tăng luồng xử lý `server.tomcat.threads.max=500`.
 
-* **Vấn đề phát hiện:** Cấu hình mặc định của HikariCP chỉ giới hạn tối đa 10 kết nối đồng thời xuống MySQL (`maximum-pool-size=10`), khiến các luồng xử lý của Web Server Tomcat phải xếp hàng chờ đợi dẫn đến lỗi Timeout hàng loạt.
-* **Giải pháp khắc phục:** Điều chỉnh thông số cấu hình trong tệp `application.properties` để cân bằng tải:
 
-```properties
-# Mở rộng số kết nối tối đa xuống Database phù hợp với phần cứng
-spring.datasource.hikari.maximum-pool-size=100
-# Tăng số luồng xử lý đồng thời của Web Server Tomcat
-server.tomcat.threads.max=500
 
-```
-
-* **Kết quả thu được:** Sau khi tối ưu hóa mã nguồn và cấu hình, hệ thống đạt bước nhảy vọt về hiệu năng: Tổng số request xử lý thành công tăng **7.5 lần** (từ 1.020 lên 7.715 requests), tốc độ xử lý trung vị giảm ngoạn mục từ 15 giây xuống chỉ còn **4.2 mili-giây (ms)**, và logic nghiệp vụ bắt trùng lịch (`409 Conflict`) hoạt động chính xác 100%, bảo vệ toàn vẹn dữ liệu hệ thống.
+**Kết quả:** Tốc độ xử lý trung vị giảm ngoạn mục từ 15 giây xuống chỉ còn **4.2 mili-giây (ms)**, và logic nghiệp vụ bắt trùng lịch (409 Conflict) hoạt động chính xác 100% trong môi trường đồng thời.
 
 ---
 
-##  Hướng Phát Triển Tương Lai (Future Enhancements)
+## 🔮 Hướng Phát Triển Tương Lai (Future Enhancements)
 
-* **Real-time Slot Locking:** Tích hợp giao thức **WebSockets (STOMP)** kết hợp bộ nhớ đệm **Redis** để triển khai tính năng giữ chỗ tạm thời trong 5 phút. Khi User A đang chọn một khung giờ, hệ thống sẽ ngay lập tức bôi xám slot đó trên màn hình của User B theo thời gian thực, tối ưu hóa trải nghiệm người dùng (UX).
-* **Distributed Lock:** Áp dụng khóa phân tán để xử lý triệt để hiện tượng Deadlock tầng Database khi có hàng ngàn lệnh ghi đồng thời vào một bản ghi dữ liệu đơn lẻ.
+* **Real-time Slot Locking:** Tích hợp WebSockets (STOMP) và Redis để bôi xám slot khám theo thời gian thực (giữ chỗ tạm thời 5 phút).
+* **Distributed Lock:** Áp dụng khóa phân tán để ngăn chặn hoàn toàn Deadlock tầng Database khi scale hệ thống.
+* **Agentic AI Expansion:** Mở rộng quyền tự trị cho AI Chatbot, cho phép bot tự động tra cứu hồ sơ y bạ hoặc đề xuất đơn thuốc tham khảo.
+
+```
+
+```
