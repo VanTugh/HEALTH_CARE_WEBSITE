@@ -1,4 +1,4 @@
-# 🏥 HEALTH_CARE_WEBSITE - Hệ Thống Đặt Lịch Khám Sức Khỏe & Trợ Lý Y Tế AI
+# HEALTH_CARE_WEBSITE - Hệ Thống Đặt Lịch Khám Sức Khỏe & Trợ Lý Y Tế AI
 
 **HealthCareBooking** là một nền tảng web toàn diện cho phép bệnh nhân tìm kiếm, chọn lựa và đặt lịch hẹn với các bác sĩ chuyên khoa theo thời gian thực. Đặc biệt, hệ thống được tích hợp hệ sinh thái Trợ lý Y tế Trí tuệ Nhân tạo (AI RAG Chatbot & Mô hình Machine Learning chẩn đoán bệnh), được xây dựng trên kiến trúc phân tầng vững chắc, hỗ trợ khả năng xử lý đồng thời cao.
 
@@ -6,7 +6,7 @@ Dự án tích hợp sẵn bộ công cụ kiểm thử tự động (E2E Testin
 
 ---
 
-## 💻 Công Nghệ Sử Dụng (Tech Stack)
+## Công Nghệ Sử Dụng (Tech Stack)
 
 | Thành phần | Công nghệ | Chi tiết sử dụng |
 | :--- | :--- | :--- |
@@ -20,7 +20,7 @@ Dự án tích hợp sẵn bộ công cụ kiểm thử tự động (E2E Testin
 
 ---
 
-## ⚙️ Yêu Cầu Hệ Thống (Prerequisites)
+## Yêu Cầu Hệ Thống (Prerequisites)
 
 Hãy đảm bảo máy tính của bạn đã cài đặt đầy đủ các công cụ sau:
 *   **Java Development Kit (JDK):** Phiên bản 17
@@ -31,7 +31,7 @@ Hãy đảm bảo máy tính của bạn đã cài đặt đầy đủ các côn
 
 ---
 
-## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy (Installation & Setup)
+## Hướng Dẫn Cài Đặt & Khởi Chạy (Installation & Setup)
 
 Để chạy Full Pipeline của hệ thống, bạn cần khởi động 4 trạm dịch vụ (mở 4 tab Terminal song song).
 
@@ -55,7 +55,7 @@ mvn spring-boot:run
 ```
 
 
-*👉 Backend chạy tại: `http://localhost:8080*`
+* Backend chạy tại: `http://localhost:8080*`
 
 ### Trạm 2: Khởi Chạy AI RAG Chatbot (Python Flask)
 
@@ -95,7 +95,7 @@ python ai_service.py
 ```
 
 
-*👉 RAG AI chạy tại: `http://localhost:5000*`
+*RAG AI chạy tại: `http://localhost:5000*`
 
 ### Trạm 3: Khởi Chạy AI Dự đoán Tiểu đường (Python FastAPI)
 
@@ -114,7 +114,7 @@ uvicorn api:app --port 8000
 ```
 
 
-*👉 Machine Learning AI chạy tại: `http://localhost:8000*`
+* Machine Learning AI chạy tại: `http://localhost:8000*`
 
 ### Trạm 4: Khởi Chạy Frontend (React)
 
@@ -133,11 +133,11 @@ npm run dev
 ```
 
 
-*👉 Giao diện chạy tại: `http://localhost:5173*`
+* Giao diện chạy tại: `http://localhost:5173*`
 
 ---
 
-## 🧪 Tài Liệu Kiểm Thử (Testing Guide)
+##  Tài Liệu Kiểm Thử (Testing Guide)
 
 Hệ thống được tích hợp hai tầng kiểm thử độc lập:
 
@@ -169,7 +169,7 @@ npx k6 run api_perf_env/stress_test.js
 
 ---
 
-## 💡 Bài Học Kỹ Thuật & Tối Ưu Hóa (Engineering Insights)
+##  Bài Học Kỹ Thuật & Tối Ưu Hóa (Engineering Insights)
 
 Qua các đợt kiểm thử hiệu năng diện rộng, hệ thống đã giải quyết thành công 2 nút thắt cổ chai (Bottlenecks):
 
@@ -186,7 +186,7 @@ Qua các đợt kiểm thử hiệu năng diện rộng, hệ thống đã giả
 
 ---
 
-## 🔮 Hướng Phát Triển Tương Lai (Future Enhancements)
+##  Hướng Phát Triển Tương Lai (Future Enhancements)
 
 * **Real-time Slot Locking:** Tích hợp WebSockets (STOMP) và Redis để bôi xám slot khám theo thời gian thực (giữ chỗ tạm thời 5 phút).
 * **Distributed Lock:** Áp dụng khóa phân tán để ngăn chặn hoàn toàn Deadlock tầng Database khi scale hệ thống.
