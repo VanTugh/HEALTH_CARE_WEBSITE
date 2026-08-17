@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AdminHistoryList from "./AdminHistoryList";
 import AdminHistoryDetail from "./AdminHistoryDetail";
-import axios from "axios";
+import api from "../../../utils/api";
 
 const AdminHistoryPage = () => {
     const today = new Date().toISOString().split("T")[0];
@@ -15,25 +15,16 @@ const AdminHistoryPage = () => {
 
     const fetchHistories = async (pageNumber = 0) => {
         try {
-            const token = localStorage.getItem("accessToken");
-            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-            const res = await axios.get(
-                `${API_BASE_URL}/api/bookings/admin/history`,
-                {
-                    params: {
-                        page: pageNumber,
-                        size,
-                        sortBy: "ngayKham",
-                        direction: "DESC",
-                        fromDate: selectedDate,
-                        toDate: selectedDate
-                    },
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "ngrok-skip-browser-warning": "true",
-                    },
-                }
-            );
+            const res = await api.get("/api/bookings/admin/history", {
+                params: {
+                    page: pageNumber,
+                    size,
+                    sortBy: "ngayKham",
+                    direction: "DESC",
+                    fromDate: selectedDate,
+                    toDate: selectedDate,
+                },
+            });
 
             if (res.data.success) {
 

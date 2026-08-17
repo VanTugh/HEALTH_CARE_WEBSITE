@@ -3,6 +3,7 @@ import { MdClose } from "react-icons/md";
 import { toast } from "react-toastify";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import api from "../../utils/api";
 
 const CancelBookingModal = ({ open, onClose, datLichID, onSuccess }) => {
     const [loading, setLoading] = useState(false);
@@ -17,29 +18,14 @@ const CancelBookingModal = ({ open, onClose, datLichID, onSuccess }) => {
     });
 
     const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-        const token = localStorage.getItem("accessToken");
         setLoading(true);
 
         try {
-            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-            const res = await fetch(
-                `${API_BASE_URL}/api/bookings/${datLichID}/cancel`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                        "ngrok-skip-browser-warning": "true",
-                    },
-                    body: JSON.stringify({
-                        datLichID,
-                        lyDoHuy: values.lyDoHuy,
-                        detailedReason: true,
-                    }),
-                }
-            );
-
-            if (!res.ok) throw new Error();
+            await api.post(`/api/bookings/${datLichID}/cancel`, {
+                datLichID,
+                lyDoHuy: values.lyDoHuy,
+                detailedReason: true,
+            });
 
             toast.success("Huỷ lịch khám thành công");
             onSuccess?.(datLichID);

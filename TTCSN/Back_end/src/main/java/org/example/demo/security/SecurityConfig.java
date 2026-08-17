@@ -1,7 +1,7 @@
 package org.example.demo.security;
 
 import java.util.List;
-
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -108,7 +108,6 @@ public class SecurityConfig {
 
 				// Configure authorization
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/ai/**").permitAll()
 
 						// ✅ VNPay
 						.requestMatchers("/api/payments/vnpay/return", "/api/payments/vnpay/ipn").permitAll()
@@ -118,18 +117,15 @@ public class SecurityConfig {
 						"/swagger-ui.html", "/api/bookings/test/**")
 				.permitAll()
 
-				.requestMatchers("/api/bac-si-2/**").permitAll()
-				.requestMatchers("/api/dat-lich", "/api/dat-lich/**").permitAll()
-				.requestMatchers("/api/diabetes", "/api/diabetes/**").permitAll()
-
 						// ✅ Public GET endpoints
-						.requestMatchers(org.springframework.http.HttpMethod.GET, "/api/specialties/**",
-								"/api/degrees/**", "/api/doctors/**",
-								"/api/facilities/**",
-
-								// 👇 QUAN TRỌNG: mở GET cho cơ sở y tế
-								"/co-so-y-te/**")
-						.permitAll()
+						.requestMatchers(
+    HttpMethod.GET,
+    "/api/specialties/**",
+    "/api/degrees/**",
+    "/api/doctors/**",
+    "/api/facilities/**"
+)
+.permitAll()
 
 						// ❗ Các method khác (POST, PUT, DELETE) vẫn cần login
 						.anyRequest().authenticated());

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 
 const generateTimeSlots = (start, end) => {
     let slots = [];
@@ -31,45 +32,58 @@ const DoctorSchedule = ({ doctor }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!doctor?.bacSiID) return;
+    if (!doctor?.bacSiID) return;
 
-        const token = localStorage.getItem("accessToken");
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-        fetch(`${API_BASE_URL}/api/bookings/doctor/${doctor.bacSiID}/schedule`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-                "ngrok-skip-browser-warning": "true",
-            },
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data?.data) {
+    console.log("🔍 Gọi API lịch khám:", `/api/bookings/doctor/${doctor.bacSiID}/schedule`);
 
-                    const todayStr = new Date().toISOString().split("T")[0];
+    api.get(`/api/bookings/doctor/${doctor.bacSiID}/schedule`)
+        .then(({ data }) => {
+            console.log("✅ Dữ liệu lịch khám:", data);
 
-                    const filtered = data.data.filter(item => {
-                        return item.ngay > todayStr;
-                    });
+            if (data?.data && Array.isArray(data.data)) {
 
-                    const sorted = filtered.sort((a, b) =>
-                        a.gioBatDau.localeCompare(b.gioBatDau)
-                    );
+                const todayStr = new Date().toISOString().split("T")[0];
 
-                    setScheduleList(sorted);
+                const filtered = data.data.filter(item => {
+                    return item.ngay > todayStr;
+                });
 
+                const sorted = filtered.sort((a, b) => {
+                    if (a.ngay !== b.ngay) {
+                        return a.ngay.localeCompare(b.ngay);
+                    }
 
-                    const firstDate = sorted[0]?.ngay;
-                    if (firstDate) setSelectedDate(firstDate);
+                    return a.gioBatDau.localeCompare(b.gioBatDau);
+                });
 
+                console.log("📅 Lịch sau khi filter:", sorted);
 
-                    const firstCa = sorted.find(x => x.ngay === firstDate)?.tenCa;
-                    if (firstCa) setSelectedCa(firstCa);
+                setScheduleList(sorted);
+
+                const firstDate = sorted[0]?.ngay;
+
+                if (firstDate) {
+                    setSelectedDate(firstDate);
+
+                    const firstCa = sorted.find(
+                        x => x.ngay === firstDate
+                    )?.tenCa;
+
+                    if (firstCa) {
+                        setSelectedCa(firstCa);
+                    }
                 }
-            })
-            .catch(err => console.error("Lỗi lấy lịch khám:", err));
-    }, [doctor?.bacSiID]);
+            } else {
+                console.warn("⚠️ API không có data:", data);
+                setScheduleList([]);
+            }
+        })
+        .catch(err => {
+            console.error("❌ Lỗi lấy lịch khám:", err);
+            setScheduleList([]);
+        });
+
+}, [doctor?.bacSiID]);
 
     if (scheduleList.length === 0) {
         return <p className="text-gray-500">Bác sĩ chưa có lịch khám.</p>;

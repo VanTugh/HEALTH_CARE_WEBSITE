@@ -1,6 +1,4 @@
-import axios from "axios";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const API_BASE = "http://localhost:8080/api/users/patients";
+import api from "../../../utils/api";
 
 export const getAllPatients = async ({
   keyword = "",
@@ -12,13 +10,7 @@ export const getAllPatients = async ({
   direction = "DESC",
 } = {}) => {
   try {
-    const token = localStorage.getItem("accessToken");
-
-    const res = await axios.get(`${API_BASE_URL}/api/users/patients`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "ngrok-skip-browser-warning": "true",
-      },
+    const res = await api.get("/api/users/patients", {
       params: {
         keyword: keyword || "",
         active,

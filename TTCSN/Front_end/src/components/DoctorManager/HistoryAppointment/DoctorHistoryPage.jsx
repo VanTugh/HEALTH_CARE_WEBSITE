@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DoctorHistoryList from "./DoctorHistoryList";
 import DoctorHistoryDetail from "./DoctorHistoryDetail";
-import axios from "axios";
+import api from "../../../utils/api";
 
 const DoctorHistoryPage = () => {
     const today = new Date().toISOString().split("T")[0];
@@ -14,25 +14,16 @@ const DoctorHistoryPage = () => {
 
     const fetchHistories = async (pageNumber = 0) => {
         try {
-            const token = localStorage.getItem("accessToken");
-            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-            const res = await axios.get(
-                `${API_BASE_URL}/api/bookings/doctor/history`,
-                {
-                    params: {
-                        page: pageNumber,
-                        size,
-                        sortBy: "ngayKham",
-                        direction: "DESC",
-                        fromDate: selectedDate,
-                        toDate: selectedDate,
-                    },
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "ngrok-skip-browser-warning": "true",
-                    },
-                }
-            );
+            const res = await api.get("/api/bookings/doctor/history", {
+                params: {
+                    page: pageNumber,
+                    size,
+                    sortBy: "ngayKham",
+                    direction: "DESC",
+                    fromDate: selectedDate,
+                    toDate: selectedDate,
+                },
+            });
             if (res.data.success) {
                 setHistories(res.data.data.content);
                 setTotalPages(res.data.data.totalPages);

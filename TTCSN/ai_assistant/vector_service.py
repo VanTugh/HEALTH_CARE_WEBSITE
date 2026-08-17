@@ -148,7 +148,7 @@ if __name__ == "__main__":
     vector_service = VectorService()
     
     # Đồng bộ dữ liệu trước (nếu chưa thực hiện)
-    # vector_service.sync_doctors_to_vector_db()
+    vector_service.sync_doctors_to_vector_db()
 
     # Test thử chức năng Retrieval
     user_prompt = "Tôi dạo này bị đau đầu kinh niên và mất ngủ, muốn tìm bác sĩ giỏi để khám"

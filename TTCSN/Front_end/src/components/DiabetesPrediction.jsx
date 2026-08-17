@@ -1,7 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/diabetes/predict";
+import api from "../utils/api";
 
 const YES_NO_FIELDS = [
   { key: "highBP", label: "Cao huyết áp" },
@@ -170,7 +168,7 @@ export default function DiabetesPredict({ onClose }) {
     try {
       // Đóng gói payload gửi sang API backend (giữ nguyên key 'bmi' chuẩn)
       const payload = { ...form, bmi: calculatedBMI };
-      const { data } = await axios.post(API_URL, payload);
+      const { data } = await api.post("/api/diabetes/predict", payload);
       setResult(data);
     } catch (err) {
       setError(

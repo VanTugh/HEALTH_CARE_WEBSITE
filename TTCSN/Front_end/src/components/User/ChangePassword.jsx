@@ -4,6 +4,7 @@ import * as Yup from 'yup'
 import { Eye, EyeOff } from 'lucide-react'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import api, { getAuthToken } from '../../utils/api';
 
 const ChangePassword = () => {
     const [showOld, setShowOld] = useState(false)
@@ -42,33 +43,22 @@ const ChangePassword = () => {
                 .required("Vui lòng nhập lại mật khẩu mới")
         }),
         onSubmit: async (values) => {
-            const token = localStorage.getItem("accessToken");
-
-            if (!token) {
+            if (!getAuthToken()) {
                 alert("Bạn chưa đăng nhập!");
                 return;
             }
 
             try {
-                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const response = await fetch(
-                    `${API_BASE_URL}/api/auth/change-password?oldPassword=${encodeURIComponent(values.oldPassword)}&newPassword=${encodeURIComponent(values.newPassword)}`,
+                const { data } = await api.put(
+                    "/api/auth/change-password",
+                    null,
                     {
-                        method: "PUT",
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Accept": "*/*",
-                            "ngrok-skip-browser-warning": "true",
-                        }
+                        params: {
+                            oldPassword: values.oldPassword,
+                            newPassword: values.newPassword,
+                        },
                     }
                 );
-
-                if (!response.ok) {
-                    const err = await response.text();
-                    throw new Error(err || "Đổi mật khẩu thất bại");
-                }
-
-                const data = await response.json();
                 console.log(data)
                 notifySuccess();
                 formik.resetForm();

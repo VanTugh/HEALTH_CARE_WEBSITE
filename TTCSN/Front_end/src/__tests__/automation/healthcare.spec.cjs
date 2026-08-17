@@ -13,7 +13,7 @@ const { test, expect } = require('@playwright/test');
 // ============================================================================
 const BASE_URL = 'http://localhost:5173';
 const LOGIN_URL = `${BASE_URL}/loginpage`;
-const VALID_PASSWORD = 'admin123';
+const VALID_PASSWORD = 'abc123!@#';
 
 const USER_EMAIL = 'shintest@healthcare.vn';     // Tài khoản Bệnh nhân chính chủ
 const DOCTOR_EMAIL = 'shinDoctor@healthcare.vn'; // Tài khoản Bác sĩ Nguyễn Tùng
@@ -158,7 +158,7 @@ test.describe('UC002: Đặt Lịch Khám', () => {
     const doctorMenu = page.locator('button, a, span, p').filter({ hasText: /^Bác sĩ$/ }).filter({ visible: true }).first();
     await doctorMenu.click();
     await page.waitForTimeout(800);
-    const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText: /Xem chi tiết|Chi tiết|Sơn|Ngân|Hiếu/i }).filter({ visible: true }).first();
+    const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText: /Xem chi tiết|Chi tiết|Nhung|Sơn|Ngân|Hiếu/i }).filter({ visible: true }).first();
     await selectDoctor.click();
     await page.waitForTimeout(1000)
     const timeSlot = page.locator('button:not([disabled]), span:not([disabled]), .time-slot:not([disabled])')
@@ -181,7 +181,7 @@ test.describe('UC002: Đặt Lịch Khám', () => {
     const doctorMenu = page.locator('button, a, span, p').filter({ hasText: /^Bác sĩ$/ }).filter({ visible: true }).first();
     await doctorMenu.click();
     await page.waitForTimeout(800);
-    const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText: /Xem chi tiết|Chi tiết|Sơn|Hiếu/i }).filter({ visible: true }).first();
+    const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText: /Xem chi tiết|Chi tiết|Nhung|Sơn|Ngân|Hiếu/i }).filter({ visible: true }).first();
     await selectDoctor.click();
     await page.waitForTimeout(1000);
     const timeSlot = page.locator('button, span, .time-slot').filter({ hasText: /(07:00|08:00|09:00|14:00|15:00|\d{2}:\d{2})/ }).filter({ visible: true }).first();
@@ -202,7 +202,7 @@ test.describe('UC002: Đặt Lịch Khám', () => {
     const doctorMenu = page.locator('button, a, span, p').filter({ hasText: /^Bác sĩ$/ }).filter({ visible: true }).first();
     await doctorMenu.click();
     await page.waitForTimeout(800);
-    const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText: /Xem chi tiết|Chi tiết|Sơn|Hiếu/i }).filter({ visible: true }).first();
+    const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText: /Xem chi tiết|Chi tiết|Nhung|Sơn|Ngân|Hiếu/i }).filter({ visible: true }).first();
     await selectDoctor.click();
     await page.waitForTimeout(1000);
     const timeSlot = page.locator('button, span, .time-slot').filter({ hasText: /(07:00|08:00|09:00|14:00|15:00|\d{2}:\d{2})/ }).filter({ visible: true }).first();
@@ -224,7 +224,7 @@ test.describe('UC002: Đặt Lịch Khám', () => {
     const doctorMenu = page.locator('button, a, span, p').filter({ hasText: /^Bác sĩ$/ }).filter({ visible: true }).first();
     await doctorMenu.click();
     await page.waitForTimeout(800);
-    const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText: /Xem chi tiết|Chi tiết|Hiếu|Hà/i }).filter({ visible: true }).first();
+    const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText: /Xem chi tiết|Chi tiết|Nhung|Sơn|Ngân|Hiếu/i }).filter({ visible: true }).first();
     await selectDoctor.click();
     await page.waitForTimeout(1000);
     // Tìm ô chọn ngày khám trên giao diện của bác sĩ và cố tình chọn ngày ở quá khứ (ví dụ năm 2025)
@@ -250,7 +250,7 @@ test.describe('UC002: Đặt Lịch Khám', () => {
     await doctorMenu.click();
     await page.waitForTimeout(800);
     const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button').filter({ hasText:
-          /Xem chi tiết|Chi tiết|Ngân|Hà/i }).filter({ visible: true }).first();
+          /Xem chi tiết|Chi tiết|Nhung|Ngân|Hà/i }).filter({ visible: true }).first();
     await selectDoctor.click();
     await page.waitForTimeout(1000);
     // 🎯 ĐỊNH VỊ KHUNG GIỜ ĐÃ BỊ ĐẦY SUẤT (Ví dụ: ô 08:00 đang hiển thị màu xám)
@@ -340,13 +340,13 @@ test.describe('UC004: Xem Chi Tiết Thông Tin Bác Sĩ', () => {
 
     // Bước 2: Tìm và chọn một bác sĩ cụ thể từ danh sách (tương tự như UC002)
     const selectDoctor = page.locator('.doctor-card, .doctor-item, a, button')
-      .filter({ hasText: /Xem chi tiết|Chi tiết|Sơn|Ngân|Hiếu|Tùng/i })
+      .filter({ hasText: /Xem chi tiết|Chi tiết|Nhung|Sơn|Ngân|Hiếu|Tùng/i })
       .filter({ visible: true })
       .first();
     await selectDoctor.click();
 
     // Bước 3: Đợi chuyển trang và kiểm tra thông tin bác sĩ hiển thị trong trang chi tiết
-    await expect(page.locator('h1, h2, .doctor-name, body')).toContainText(/Sơn|Ngân|Hiếu|Bác sĩ/i, { timeout: 5000 });
+    await expect(page.locator('h1, h2, .doctor-name, body')).toContainText(/Nhung|Sơn|Ngân|Hiếu|Tùng|Bác sĩ/i, { timeout: 5000 });
   });
 
   // ========================================================================

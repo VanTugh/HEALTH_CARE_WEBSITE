@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import MedicalHistoryItem from "./MedicalHistoryItem";
 import MedicalHistoryDetailModal from "./MedicalHistoryDetailModal";
+import api from "../../utils/api";
 
 export default function MedicalHistory() {
     const [histories, setHistories] = useState([]);
@@ -25,25 +26,19 @@ export default function MedicalHistory() {
 
     const fetchHistory = async () => {
         try {
-            const token = localStorage.getItem("accessToken");
-            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
             const { fromDate, toDate } = getDateRange();
 
-            const url = `${API_BASE_URL}/api/bookings/history`
-                + `?fromDate=${fromDate}`
-                + `&toDate=${toDate}`
-                + `&status=HOAN_THANH`
-                + `&page=0&size=50&sortBy=ngayKham&direction=DESC`;
-
-            const res = await fetch(url, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                    "ngrok-skip-browser-warning": "true",
-                }
+            const { data: json } = await api.get("/api/bookings/history", {
+                params: {
+                    fromDate,
+                    toDate,
+                    status: "HOAN_THANH",
+                    page: 0,
+                    size: 50,
+                    sortBy: "ngayKham",
+                    direction: "DESC",
+                },
             });
-
-            const json = await res.json();
 
             if (json.success && json.data) {
                 const sorted = json.data.content.sort(

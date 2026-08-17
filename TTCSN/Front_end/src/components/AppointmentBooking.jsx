@@ -6,6 +6,7 @@ import HeaderSub from "./HeaderSub";
 import Footer from "./Footer";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api, { getAuthToken } from "../utils/api";
 
 const AppointmentBooking = () => {
     const location = useLocation();
@@ -26,8 +27,7 @@ const AppointmentBooking = () => {
         7: 800000,
     };
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
+        if (!getAuthToken()) {
             toast.error("Bạn cần đăng nhập để đặt lịch!");
             setTimeout(() => navigate("/loginpage"), 1500);
         } else {
@@ -91,7 +91,6 @@ const AppointmentBooking = () => {
             }
 
             setLoading(true);
-            const token = localStorage.getItem("accessToken");
 
             const body = {
                 bacSiID: doctor?.bacSiID,
@@ -108,20 +107,7 @@ const AppointmentBooking = () => {
             };
 
             try {
-                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const res = await fetch(`${API_BASE_URL}/api/bookings`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                        "ngrok-skip-browser-warning": "true",
-                    },
-                    body: JSON.stringify(body),
-                });
-
-                if (!res.ok) throw new Error();
-                console.log(body)
-                await res.json();
+                await api.post("/api/bookings", body);
 
                 notifySuccess();
                 await new Promise((resolve) => setTimeout(resolve, 3000));

@@ -1,4 +1,4 @@
-
+show grants for 'thang'@'localhost'; # kiểm tra quyền
 DROP DATABASE IF EXISTS DatLichKham;
 CREATE DATABASE DatLichKham CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

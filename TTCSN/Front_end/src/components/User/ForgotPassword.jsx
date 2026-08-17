@@ -4,7 +4,7 @@ import Footer from '../Footer'
 import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import axios from 'axios'
+import api from '../../utils/api'
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
@@ -26,18 +26,8 @@ const ForgotPassword = () => {
             setError(null);
 
             try {
-                const token = localStorage.getItem("accessToken");
-                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const res = await axios.post(
-                    `${API_BASE_URL}/api/auth/forgot-password?email=${encodeURIComponent(values.email)}`,
-                    {},
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            Accept: "*/*",
-                            "ngrok-skip-browser-warning": "true",
-                        },
-                    }
+                const res = await api.post(
+                    `/api/auth/forgot-password?email=${encodeURIComponent(values.email)}`
                 );
 
                 console.log("Kết quả API:", res.data);

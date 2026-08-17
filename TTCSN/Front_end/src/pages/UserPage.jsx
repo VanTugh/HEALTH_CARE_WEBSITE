@@ -9,6 +9,7 @@ import CancelBookingModal from '../components/User/CancelBookingModal';
 import MedicalHistory from '../components/User/MedicalHistory';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import api, { getAuthToken } from '../utils/api';
 
 const UserPage = () => {
     const navigate = useNavigate();
@@ -35,24 +36,15 @@ const UserPage = () => {
 
 
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
+        if (!getAuthToken()) {
             setError("Chưa đăng nhập!");
             return;
         }
 
         setLoading(true);
         setError(null);
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-        fetch(`${API_BASE_URL}/api/bookings/my?page=0&size=10`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-                "ngrok-skip-browser-warning": "true",
-            }
-        })
-            .then(res => res.json())
-            .then(data => {
+        api.get("/api/bookings/my", { params: { page: 0, size: 10 } })
+            .then(({ data }) => {
                 console.log(data)
                 if (data.success) {
 

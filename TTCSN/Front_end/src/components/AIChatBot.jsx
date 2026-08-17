@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import DiabetesPredict from "../components/DiabetesPrediction";
-
-const DEV_MODE = import.meta.env.VITE_DEV_MODE || "dev";
+import api from "../utils/api";
 
 const AIChatBot = () => {
     const [open, setOpen] = useState(false);
@@ -41,57 +40,15 @@ const AIChatBot = () => {
         }
     }, [messages, open]);
 
-    // Mock API (giữ nguyên logic cũ)
-    const mockAiChatApi = async (userMsg) => {
-        await new Promise((res) => setTimeout(res, 1000));
-        return {
-            answer: `Dựa trên triệu chứng "${userMsg}", tôi gợi ý Bác sĩ chuyên khoa phù hợp với bạn:`,
-            recommendedDoctor: {
-                id: 101,
-                name: "BS. CKI Nguyễn Văn A",
-                specialty: "Chuyên khoa Tim mạch - Thần kinh",
-                price: 300000,
-                avatar: "👨‍⚕️"
-            }
-        };
-    };
-
-    const mockGetDoctorScheduleApi = async (bacSiId, ngay) => {
-        await new Promise((res) => setTimeout(res, 600));
-        return [
-            { id: 1, ca: "SANG", gioKham: "08:00 - 08:30" },
-            { id: 2, ca: "SANG", gioKham: "09:30 - 10:00" },
-            { id: 3, ca: "CHIEU", gioKham: "14:00 - 14:30" },
-            { id: 4, ca: "CHIEU", gioKham: "15:30 - 16:00" }
-        ];
-    };
-
-    const mockSaveBookingApi = async () => {
-        await new Promise((res) => setTimeout(res, 800));
-        return {
-            success: true,
-            bookingCode: "DL" + Math.floor(100000 + Math.random() * 900000)
-        };
-    };
-
     const fetchDoctorSchedule = async (bacSiId, selectedDate) => {
         setLoadingSlots(true);
         setBookingData((prev) => ({ ...prev, selectedSlot: null }));
         try {
-            let slots = [];
-            if (DEV_MODE === "dev") {
-                slots = await mockGetDoctorScheduleApi(bacSiId, selectedDate);
-            } else {
-                const token = localStorage.getItem("accessToken");
-                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const response = await fetch(
-                    `${API_BASE_URL}/api/bac-si-2/${bacSiId}/lich-ranh?ngay=${selectedDate}`,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                if (!response.ok) throw new Error("Không lấy được lịch bác sĩ");
-                slots = await response.json();
-            }
-            setAvailableSlots(slots);
+            const { data: slotsData } = await api.get(
+                `/api/bac-si-2/${bacSiId}/lich-ranh`,
+                { params: { ngay: selectedDate } }
+            );
+            setAvailableSlots(slotsData);
         } catch (error) {
             console.error("Lỗi lấy lịch:", error);
             setAvailableSlots([]);
@@ -109,25 +66,9 @@ const AIChatBot = () => {
 
         try {
             setLoading(true);
-            let data;
-
-            if (DEV_MODE === "dev") {
-                data = await mockAiChatApi(userMessage);
-            } else {
-                const token = localStorage.getItem("accessToken");
-                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ message: userMessage }),
-                });
-
-                if (!response.ok) throw new Error("API Error");
-                data = await response.json();
-            }
+            const { data } = await api.post("/api/ai/chat", {
+                message: userMessage,
+            });
 
             setMessages((prev) => [
                 ...prev,
@@ -149,7 +90,7 @@ const AIChatBot = () => {
                 });
                 fetchDoctorSchedule(data.recommendedDoctor.id, today);
             }
-        } catch (e) {
+        } catch {
             setMessages((prev) => [
                 ...prev,
                 { id: Date.now(), sender: "bot", text: "Xin lỗi, AI đang bận. Vui lòng thử lại sau." }
@@ -167,31 +108,13 @@ const AIChatBot = () => {
 
         try {
             setLoading(true);
-            let res;
-
-            if (DEV_MODE === "dev") {
-                res = await mockSaveBookingApi();
-            } else {
-                const token = localStorage.getItem("accessToken");
-                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const response = await fetch(`${API_BASE_URL}/api/dat-lich`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        bacSiID: doctor.id,
-                        ngayKham: bookingData.ngayKham,
-                        ca: bookingData.selectedSlot.ca,
-                        gioKham: bookingData.selectedSlot.gioKham,
-                        lyDoKham: bookingData.lyDoKham
-                    }),
-                });
-
-                if (!response.ok) throw new Error("Lỗi khi lưu lịch");
-                res = await response.json();
-            }
+            const { data: res } = await api.post("/api/dat-lich", {
+                bacSiID: doctor.id,
+                ngayKham: bookingData.ngayKham,
+                ca: bookingData.selectedSlot.ca,
+                gioKham: bookingData.selectedSlot.gioKham,
+                lyDoKham: bookingData.lyDoKham,
+            });
 
             setMessages((prev) =>
                 prev.map((msg) =>
@@ -204,7 +127,7 @@ const AIChatBot = () => {
                         : msg
                 )
             );
-        } catch (error) {
+        } catch {
             alert("Đã có lỗi xảy ra khi đặt lịch!");
         } finally {
             setLoading(false);
@@ -235,9 +158,6 @@ const AIChatBot = () => {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-[9px] bg-blue-800/50 px-2 py-1 rounded-md font-mono uppercase">
-                                {DEV_MODE}
-                            </span>
                             <button onClick={() => setOpen(false)} className="text-blue-100 hover:text-white text-xl leading-none">
                                 &times;
                             </button>

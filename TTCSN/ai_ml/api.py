@@ -9,6 +9,7 @@ Sau đó mở trình duyệt vào: http://localhost:8000/docs
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import joblib
 import numpy as np
@@ -18,6 +19,14 @@ import warnings
 warnings.filterwarnings("ignore")  # ẩn cảnh báo version sklearn/xgboost khi load pickle
 
 app = FastAPI(title="AI-Diabetes Prediction API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ==== 1. Load model ====
 # Đặt file xgboost.pkl cùng thư mục với file api.py này,

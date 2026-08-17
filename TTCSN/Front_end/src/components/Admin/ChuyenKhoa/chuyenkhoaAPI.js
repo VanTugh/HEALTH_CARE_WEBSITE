@@ -1,14 +1,8 @@
-import axios from "axios";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import api from "../../../utils/api";
 
 export const getAllSpecialties = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/specialties`, {
-      headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
-      },
-    });
+    const response = await api.get("/api/specialties");
     return response.data;
   } catch (error) {
     console.error(
@@ -19,15 +13,9 @@ export const getAllSpecialties = async () => {
   }
 };
 
-export const createSpecialty = async (data, token) => {
+export const createSpecialty = async (data) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/api/specialties`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
-      },
-    });
+    const response = await api.post("/api/specialties", data);
     return response.data;
   } catch (error) {
     console.error(
@@ -38,17 +26,9 @@ export const createSpecialty = async (data, token) => {
   }
 };
 
-export const deleteSpecialty = async (id, token) => {
+export const deleteSpecialty = async (id) => {
   try {
-    const response = await axios.delete(
-      `${API_BASE_URL}/api/specialties/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "true",
-        },
-      }
-    );
+    const response = await api.delete(`/api/specialties/${id}`);
     return response.data;
   } catch (error) {
     console.error(
@@ -59,19 +39,9 @@ export const deleteSpecialty = async (id, token) => {
   }
 };
 
-export const updateSpecialty = async (id, data, token) => {
+export const updateSpecialty = async (id, data) => {
   try {
-    const response = await axios.put(
-      `${API_BASE_URL}/api/specialties/${id}`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
-        },
-      }
-    );
+    const response = await api.put(`/api/specialties/${id}`, data);
     return response.data;
   } catch (error) {
     console.error(
