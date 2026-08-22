@@ -10,6 +10,7 @@ const BaiVietManager = () => {
     const [formData, setFormData] = useState({
         baiVietID: null,
         tieuDe: "",
+        tenTacGia: "",
         anhBia: "",
         phanLoai: "Được quan tâm",
         noiDung: ""
@@ -45,6 +46,7 @@ const BaiVietManager = () => {
             setFormData({
                 baiVietID: null,
                 tieuDe: "",
+                tenTacGia: "",
                 anhBia: "https://",
                 phanLoai: "Được quan tâm",
                 noiDung: ""
@@ -120,7 +122,7 @@ const BaiVietManager = () => {
     return (
         <div className="p-4 md:p-6 bg-white shadow rounded-lg w-[82vw]">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Quản Lý Bài Viết & Gợi Ý</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Quản Lý Bài Viết</h1>
                 <button
                     onClick={() => handleOpenModal()}
                     className="bg-[#a35a37] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-[#854527] transition"
@@ -130,7 +132,7 @@ const BaiVietManager = () => {
             </div>
 
             <div className="overflow-x-auto">
-                <table className="w-[1050px] border-collapse bg-white shadow-sm rounded-lg overflow-hidden border">
+                <table className="w-full min-w-[1050px] mx-auto border-collapse bg-white shadow-sm rounded-lg overflow-hidden border">
                     <thead className="bg-[#a35a37] text-white text-left">
                         <tr>
                             <th className="p-3 w-16">ID</th>
@@ -197,6 +199,16 @@ const BaiVietManager = () => {
                                         value={formData.tieuDe}
                                         onChange={(e) => setFormData({ ...formData, tieuDe: e.target.value })}
                                         placeholder="Tên bài báo..."
+                                    />
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-gray-700 font-semibold mb-2">Tên Tác Giả</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border p-2 rounded-lg"
+                                        value={formData.tenTacGia || ""}
+                                        onChange={(e) => setFormData({ ...formData, tenTacGia: e.target.value })}
+                                        placeholder="VD: BS. Nguyễn Văn A"
                                     />
                                 </div>
                                 <div className="mb-4">

@@ -15,7 +15,7 @@ const AdminPage = () => {
         "Quản lý lịch nghỉ",
         "Quản lý lịch sử khám",
         "Quản lý khuyến mãi",
-        "Gợi Ý (Blog)"
+        "Quản lý bài viết"
     ]
 
     const [index, setIndex] = useState(0)

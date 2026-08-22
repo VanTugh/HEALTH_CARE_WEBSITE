@@ -37,4 +37,8 @@ public class BaiViet extends BaseEntity {
     // Lưu ID người tạo đơn giản, tránh circular reference khi serialize JSON
     @Column(name = "NguoiTao")
     private Integer nguoiTaoID;
+
+    // Tên tác giả tự điền (không bắt buộc liên kết với bảng NguoiDung)
+    @Column(name = "TenTacGia", length = 255)
+    private String tenTacGia;
 }

@@ -80,7 +80,7 @@ const PostDetail = () => {
                         </h1>
                         <div className="flex flex-wrap justify-center items-center gap-4 text-sm text-gray-500 bg-gray-50 px-6 py-3 rounded-full w-fit mx-auto">
                             <span className="flex items-center gap-1.5">
-                                <i className="fa-solid fa-pen-nib text-[#0b9c7b]"></i> {post.tenNguoiTao}
+                                <i className="fa-solid fa-pen-nib text-[#0b9c7b]"></i> {post.tenTacGia || post.tenNguoiTao}
                             </span>
                             <span className="text-gray-300">|</span>
                             <span className="flex items-center gap-1.5">
@@ -147,7 +147,7 @@ const PostDetail = () => {
                                     <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-2">
                                         Bài viết được thực hiện bởi
                                     </div>
-                                    <div className="font-bold text-[#111] text-[14px]">{post.tenNguoiTao}</div>
+                                    <div className="font-bold text-[#111] text-[14px]">{post.tenTacGia || post.tenNguoiTao}</div>
                                 </div>
 
                             </div>

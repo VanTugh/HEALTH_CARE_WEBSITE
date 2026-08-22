@@ -18,4 +18,5 @@ public class BaiVietRequest {
     private String phanLoai;
     @NotBlank(message = "Nội dung không được để trống")
     private String noiDung;
+    private String tenTacGia;
 }

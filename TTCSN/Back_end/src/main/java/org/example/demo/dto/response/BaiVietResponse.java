@@ -21,6 +21,7 @@ public class BaiVietResponse {
     private Integer luotXem;
     private Integer nguoiTaoID;
     private String tenNguoiTao;
+    private String tenTacGia;
     private LocalDateTime createdAt;
 
     public static BaiVietResponse of(BaiViet bv) {
@@ -32,6 +33,7 @@ public class BaiVietResponse {
                 .noiDung(bv.getNoiDung())
                 .luotXem(bv.getLuotXem() != null ? bv.getLuotXem() : 0)
                 .nguoiTaoID(bv.getNguoiTaoID())
+                .tenTacGia(bv.getTenTacGia())
                 // tenNguoiTao gets mapped in the service layer
                 .createdAt(bv.getCreatedAt())
                 .build();

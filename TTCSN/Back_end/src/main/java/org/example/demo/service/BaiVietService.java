@@ -19,7 +19,10 @@ public class BaiVietService {
 
     private BaiVietResponse mapToResponse(BaiViet bv) {
         BaiVietResponse res = BaiVietResponse.of(bv);
-        if (bv.getNguoiTaoID() != null) {
+        // Ưu tiên tên tác giả tự điền, fallback về tên bác sĩ nếu không có
+        if (bv.getTenTacGia() != null && !bv.getTenTacGia().isBlank()) {
+            res.setTenNguoiTao(bv.getTenTacGia());
+        } else if (bv.getNguoiTaoID() != null) {
             nguoiDungRepository.findById(bv.getNguoiTaoID())
                 .ifPresent(u -> res.setTenNguoiTao(u.getHoTen()));
         } else {
@@ -52,8 +55,9 @@ public class BaiVietService {
         bv.setAnhBia(request.getAnhBia());
         bv.setPhanLoai(request.getPhanLoai());
         bv.setNoiDung(request.getNoiDung());
+        bv.setTenTacGia(request.getTenTacGia());
         bv.setLuotXem(0);
-        return BaiVietResponse.of(baiVietRepository.save(bv));
+        return mapToResponse(baiVietRepository.save(bv));
     }
 
     public BaiVietResponse update(Integer id, BaiVietRequest request) {
@@ -64,7 +68,8 @@ public class BaiVietService {
         }
         bv.setPhanLoai(request.getPhanLoai());
         bv.setNoiDung(request.getNoiDung());
-        return BaiVietResponse.of(baiVietRepository.save(bv));
+        bv.setTenTacGia(request.getTenTacGia());
+        return mapToResponse(baiVietRepository.save(bv));
     }
 
     public void delete(Integer id) {

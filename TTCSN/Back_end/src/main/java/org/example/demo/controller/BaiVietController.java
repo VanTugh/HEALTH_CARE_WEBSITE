@@ -5,6 +5,7 @@ import org.example.demo.dto.request.BaiVietRequest;
 import org.example.demo.dto.response.ApiResponseDTO;
 import org.example.demo.dto.response.BaiVietResponse;
 import org.example.demo.service.BaiVietService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,12 +32,12 @@ public class BaiVietController {
 
     // Yêu cầu quyền Admin cho các endpoint dưới đây
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<BaiVietResponse>> create(@RequestBody BaiVietRequest request) {
+    public ResponseEntity<ApiResponseDTO<BaiVietResponse>> create(@Valid @RequestBody BaiVietRequest request) {
         return ResponseEntity.ok(ApiResponseDTO.success(baiVietService.create(request)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<BaiVietResponse>> update(@PathVariable Integer id, @RequestBody BaiVietRequest request) {
+    public ResponseEntity<ApiResponseDTO<BaiVietResponse>> update(@PathVariable Integer id, @Valid @RequestBody BaiVietRequest request) {
         return ResponseEntity.ok(ApiResponseDTO.success(baiVietService.update(id, request)));
     }
 

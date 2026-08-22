@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS BaiViet (
     NoiDung LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     LuotXem INT DEFAULT 0,
     NguoiTao INT,
+    TenTacGia VARCHAR(255) DEFAULT NULL,
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     DeletedAt DATETIME DEFAULT NULL,
@@ -18,8 +19,28 @@ CREATE TABLE IF NOT EXISTS BaiViet (
     IsDeleted TINYINT(1) DEFAULT 0
 );
 
--- Xóa dữ liệu cũ nếu tồn tại để chạy lại không bị lỗi
-DELETE FROM BaiViet WHERE BaiVietID IN (1, 2, 3);
+-- Thêm cột TenTacGia cho bảng đang tồn tại (tương thích MySQL 5.7+)
+DROP PROCEDURE IF EXISTS sp_AddTenTacGia;
+DELIMITER $$
+CREATE PROCEDURE sp_AddTenTacGia()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = 'DatLichKham'
+          AND TABLE_NAME   = 'BaiViet'
+          AND COLUMN_NAME  = 'TenTacGia'
+    ) THEN
+        ALTER TABLE BaiViet ADD COLUMN TenTacGia VARCHAR(255) DEFAULT NULL AFTER NguoiTao;
+    END IF;
+END$$
+DELIMITER ;
+CALL sp_AddTenTacGia();
+DROP PROCEDURE IF EXISTS sp_AddTenTacGia;
+
+-- Xóa toàn bộ dữ liệu cũ và reset AUTO_INCREMENT về 1
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE BaiViet;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- BÀI VIẾT 1 — Chuyên mục: Được quan tâm
@@ -512,7 +533,7 @@ INSERT INTO BaiViet (TieuDe, AnhBia, PhanLoai, NoiDung, LuotXem, NguoiTao) VALUE
 -- ============================================================
 INSERT INTO BaiViet (TieuDe, AnhBia, PhanLoai, NoiDung, LuotXem, NguoiTao) VALUES (
 'Bệnh Lupus ban đỏ là gì? Khám và điều trị với bác sĩ chuyên khoa nào?',
-'https://images.unsplash.com/photo-1559757175-0eb30cd8c063?auto=format&fit=crop&w=1200&q=80',
+'https://dalieudhyd.vn/wp-content/uploads/2025/01/lupus-ban-do-1.webp',
 'Được quan tâm',
 '<div style="max-width:100%;font-family:Inter,sans-serif;color:#475467;line-height:1.8">
 
@@ -571,6 +592,54 @@ INSERT INTO BaiViet (TieuDe, AnhBia, PhanLoai, NoiDung, LuotXem, NguoiTao) VALUE
 </div>',
 48, 1);
 
--- Xác nhận
-SELECT 'Đã thêm thành công tất cả bài viết vào hệ thống!' AS ThongBao;
+-- Xác nhận kết quả
 SELECT BaiVietID, TieuDe, PhanLoai, LuotXem FROM BaiViet ORDER BY BaiVietID;
+SELECT CONCAT('✅ Hoàn tất! Đã thêm ', COUNT(*), ' bài viết với ID từ 1 đến ', MAX(BaiVietID)) AS ThongBao FROM BaiViet;
+
+-- ============================================================
+-- RESET ID BÀI VIẾT VỀ 1, 2, 3, ...
+-- (Xử lý được cả ID âm từ lần chạy lỗi trước)
+-- ============================================================
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Xóa bảng tạm nếu còn tồn tại
+DROP TEMPORARY TABLE IF EXISTS TempIDMapping;
+
+-- Tạo mapping cho TẤT CẢ rows (kể cả ID âm),
+-- sắp xếp theo ABS(BaiVietID) để giữ thứ tự tự nhiên
+CREATE TEMPORARY TABLE TempIDMapping AS
+SELECT 
+    BaiVietID                                               AS old_id,
+    ROW_NUMBER() OVER (ORDER BY ABS(BaiVietID)) + 1000000  AS temp_id,
+    ROW_NUMBER() OVER (ORDER BY ABS(BaiVietID))             AS new_id
+FROM BaiViet;
+
+-- Bước 1: Chuyển tất cả → temp_id (> 1,000,000, không bao giờ conflict)
+UPDATE BaiViet b
+JOIN TempIDMapping m ON b.BaiVietID = m.old_id
+SET b.BaiVietID = m.temp_id;
+
+-- Bước 2: Chuyển temp_id → new_id (1, 2, 3, ...)
+UPDATE BaiViet b
+JOIN TempIDMapping m ON b.BaiVietID = m.temp_id
+SET b.BaiVietID = m.new_id;
+
+-- Bước 3: Reset AUTO_INCREMENT
+SET @max_id = (SELECT MAX(BaiVietID) FROM BaiViet);
+SET @reset_sql = CONCAT('ALTER TABLE BaiViet AUTO_INCREMENT = ', @max_id + 1);
+PREPARE stmt FROM @reset_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+DROP TEMPORARY TABLE IF EXISTS TempIDMapping;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Xác nhận kết quả
+SELECT BaiVietID, TieuDe, PhanLoai, LuotXem 
+FROM BaiViet 
+ORDER BY BaiVietID;
+
+SELECT CONCAT('✅ Đã reset thành công! ID hiện tại từ 1 đến ', MAX(BaiVietID)) AS ThongBao
+FROM BaiViet;
+
