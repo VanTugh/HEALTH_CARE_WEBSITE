@@ -74,6 +74,12 @@ public class BookingService {
     @Autowired
     private LichLamViecMacDinhRepository lichLamViecMacDinhRepository;
 
+    @Autowired
+    private NguoiThanRepository nguoiThanRepository;
+
+    @Autowired
+    private KhuyenMaiRepository khuyenMaiRepository;
+
     private static final int MAX_BOOKING_DAYS_AHEAD = 30;
     private static final int CANCELLATION_HOURS_BEFORE = 24;
     private static final int MAX_SCHEDULE_RANGE_DAYS = 31;
@@ -100,34 +106,31 @@ public class BookingService {
 
         // 2. Load entities
         NguoiDung patient = nguoiDungRepository.findById(currentUserId)
-            .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
 
-//        BacSi doctor = bacSiRepository.findById(request.getBacSiID())
-//              .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại"));
-
+        // BacSi doctor = bacSiRepository.findById(request.getBacSiID())
+        // .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại"));
 
         BacSi doctor = bacSiRepository.getReferenceById(request.getBacSiID());
 
-//          if (!Boolean.TRUE.equals(doctor.getTrangThaiCongViec())) {
-//             throw new BadRequestException("Bác sĩ hiện không nhận khám");
-//          }
+        // if (!Boolean.TRUE.equals(doctor.getTrangThaiCongViec())) {
+        // throw new BadRequestException("Bác sĩ hiện không nhận khám");
+        // }
 
         List<TrangThaiDatLich> activeStatuses = Arrays.asList(
-            TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI,
-            TrangThaiDatLich.CHO_THANH_TOAN,
-            TrangThaiDatLich.DA_XAC_NHAN_CHO_THANH_TOAN,
-            TrangThaiDatLich.DA_XAC_NHAN,
-            TrangThaiDatLich.DANG_KHAM
-        );
+                TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI,
+                TrangThaiDatLich.CHO_THANH_TOAN,
+                TrangThaiDatLich.DA_XAC_NHAN_CHO_THANH_TOAN,
+                TrangThaiDatLich.DA_XAC_NHAN,
+                TrangThaiDatLich.DANG_KHAM);
 
         // 3. Check duplicate slot (only active & not deleted)
         boolean slotOccupied = datLichKhamRepository.existsActiveBookingForSlot(
-            request.getBacSiID(),
-            request.getNgayKham(),
-            request.getCa(),
-            request.getGioKham(),
-            activeStatuses
-        );
+                request.getBacSiID(),
+                request.getNgayKham(),
+                request.getCa(),
+                request.getGioKham(),
+                activeStatuses);
 
         if (slotOccupied) {
             throw new ConflictException("Khung giờ này đã có người đặt");
@@ -135,29 +138,40 @@ public class BookingService {
 
         // 4. Check patient conflict (only active & not deleted)
         boolean patientConflict = datLichKhamRepository.existsActivePatientConflict(
-            currentUserId,
-            request.getNgayKham(),
-            request.getCa(),
-            request.getGioKham(),
-            activeStatuses
-        );
+                currentUserId,
+                request.getNgayKham(),
+                request.getCa(),
+                request.getGioKham(),
+                activeStatuses);
 
         if (patientConflict) {
             throw new ConflictException("Bạn đã có lịch hẹn khác vào cùng thời gian này");
         }
 
         // 5. Tính giá
-         //BigDecimal giaKham = calculateBookingPrice(doctor);
-       BigDecimal giaKham = new BigDecimal("100000"); // Tạm thời cố định giá khám, sẽ tính sau khi có thông tin lịch làm việc của bác sĩ
+        // BigDecimal giaKham = calculateBookingPrice(doctor);
+        BigDecimal giaKham = new BigDecimal("100000"); // Tạm thời cố định giá khám, sẽ tính sau khi có thông tin lịch
+                                                       // làm việc của bác sĩ
 
         // 6. Get clinic (simplified: use first available clinic)
         CoSoYTe clinic = coSoYTeRepository.findAll().stream()
-            .findFirst()
-            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cơ sở y tế"));
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cơ sở y tế"));
+
+        // ===== XỬ LÝ KHÁM HỘ =====
+        NguoiThan relative = null;
+        if (request.getNguoiThanID() != null) {
+            relative = nguoiThanRepository.findById(request.getNguoiThanID())
+                    .orElseThrow(() -> new ResourceNotFoundException("Người thân không tồn tại"));
+            if (!relative.getNguoiDung().getNguoiDungID().equals(currentUserId)) {
+                throw new UnauthorizedException("Người thân này không thuộc tài khoản của bạn");
+            }
+        }
 
         // 7. Tạo booking
         DatLichKham booking = new DatLichKham();
         booking.setBenhNhan(patient);
+        booking.setNguoiThan(relative);
         booking.setBacSi(doctor);
         booking.setCoSoYTe(clinic);
         booking.setNgayKham(request.getNgayKham());
@@ -169,6 +183,39 @@ public class BookingService {
         booking.setMaXacNhan(generateConfirmationCode());
         booking.setPhuongThucThanhToan(request.getPhuongThucThanhToan());
         booking.setNgayDat(LocalDateTime.now());
+        
+        // ===== XỬ LÝ MÃ KHUYẾN MÃI =====
+        if (request.getMaKhuyenMai() != null && !request.getMaKhuyenMai().isBlank()) {
+            KhuyenMai km = khuyenMaiRepository.findByMaVoucherAndIsDeletedFalse(request.getMaKhuyenMai())
+                .orElseThrow(() -> new BadRequestException("Mã khuyến mãi không hợp lệ"));
+            
+            if (!km.getTrangThai() || km.getSoLuong() <= 0) {
+                throw new BadRequestException("Mã khuyến mãi đã hết lượt sử dụng");
+            }
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isBefore(km.getNgayBatDau()) || now.isAfter(km.getNgayKetThuc())) {
+                throw new BadRequestException("Mã khuyến mãi đã hết hạn");
+            }
+            
+            // Tính số tiền giảm
+            BigDecimal phanTram = km.getPhanTramGiam().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+            BigDecimal giam = giaKham.multiply(phanTram);
+            if (giam.compareTo(km.getGiamToiDa()) > 0) {
+                giam = km.getGiamToiDa();
+            }
+            
+            booking.setKhuyenMai(km);
+            booking.setTienGiamGia(giam);
+            
+            // Trừ số lượng KhuyenMai 
+            km.setSoLuong(km.getSoLuong() - 1);
+            khuyenMaiRepository.save(km);
+            
+            // Nếu muốn cập nhật giá VNPay để sau thanh toán, PaymentService sẽ đọc tổng tiền:
+            // Tổng tiền = GiaKham - TienGiamGia (Tự logic xử lý ở PaymentService dùng)
+        } else {
+            booking.setTienGiamGia(BigDecimal.ZERO);
+        }
 
         // Set status: online payments require doctor approval first, then payment
         booking.setTrangThai(TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI);
@@ -179,7 +226,8 @@ public class BookingService {
         } catch (DataIntegrityViolationException e) {
             // Nếu DB còn unique index cũ gây trùng dù booking đã hủy/hoàn thành
             if (e.getMessage() != null && e.getMessage().contains("unique_booking_slot_active")) {
-                throw new ConflictException("Khung giờ này đã có người đặt (unique index cũ). Vui lòng drop index unique_booking_slot_active.");
+                throw new ConflictException(
+                        "Khung giờ này đã có người đặt (unique index cũ). Vui lòng drop index unique_booking_slot_active.");
             }
             // Bắt lỗi unique khác
             throw new ConflictException("Khung giờ này đã có người đặt (trùng slot)");
@@ -210,8 +258,7 @@ public class BookingService {
             PhuongThucThanhToan paymentMethod,
             Boolean hasRating,
             Integer doctorFilterId,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         if (phone == null || phone.isBlank()) {
             throw new BadRequestException("Số điện thoại không được trống");
         }
@@ -232,8 +279,7 @@ public class BookingService {
                 doctorFilterId,
                 patient.getNguoiDungID(),
                 null,
-                pageable
-        );
+                pageable);
         return bookings.map(BookingResponse::of);
     }
 
@@ -249,8 +295,7 @@ public class BookingService {
 
         if (ngayKham.isAfter(today.plusDays(MAX_BOOKING_DAYS_AHEAD))) {
             throw new BadRequestException(
-                String.format("Chỉ có thể đặt lịch trước tối đa %d ngày", MAX_BOOKING_DAYS_AHEAD)
-            );
+                    String.format("Chỉ có thể đặt lịch trước tối đa %d ngày", MAX_BOOKING_DAYS_AHEAD));
         }
     }
 
@@ -262,7 +307,7 @@ public class BookingService {
         String trinhDo = doctor.getTrinhDo().getTenTrinhDo();
 
         BigDecimal multiplier = BigDecimal.ONE;
-        
+
         if (trinhDo.contains("Tiến sĩ") || trinhDo.contains("TS")) {
             multiplier = new BigDecimal("1.5");
         } else if (trinhDo.contains("Thạc sĩ") || trinhDo.contains("ThS")) {
@@ -280,7 +325,8 @@ public class BookingService {
      * Tạo mã xác nhận
      */
     private String generateConfirmationCode() {
-        // Sinh mã thân thiện cho người nhập: BK + 6 ký tự (2-9,A-H,J-N,P-Z), tổng 8 ký tự
+        // Sinh mã thân thiện cho người nhập: BK + 6 ký tự (2-9,A-H,J-N,P-Z), tổng 8 ký
+        // tự
         for (int attempt = 0; attempt < 5; attempt++) {
             StringBuilder sb = new StringBuilder("BK");
             for (int i = 0; i < CONFIRM_CODE_RANDOM_LEN; i++) {
@@ -315,10 +361,11 @@ public class BookingService {
             throw new UnauthorizedException("Bạn không có quyền xử lý lịch hẹn này");
         }
 
-        // Validate status: cho phép cả CHO_XAC_NHAN_BAC_SI (flow mới) và CHO_THANH_TOAN (legacy VNPay)
-        boolean canProcess =
-            booking.getTrangThai() == TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI ||
-            (booking.getTrangThai() == TrangThaiDatLich.CHO_THANH_TOAN && booking.getPhuongThucThanhToan().isOnlinePayment());
+        // Validate status: cho phép cả CHO_XAC_NHAN_BAC_SI (flow mới) và CHO_THANH_TOAN
+        // (legacy VNPay)
+        boolean canProcess = booking.getTrangThai() == TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI ||
+                (booking.getTrangThai() == TrangThaiDatLich.CHO_THANH_TOAN
+                        && booking.getPhuongThucThanhToan().isOnlinePayment());
         if (!canProcess) {
             throw new BadRequestException("Chỉ có thể xử lý lịch hẹn ở trạng thái chờ bác sĩ xác nhận");
         }
@@ -347,9 +394,8 @@ public class BookingService {
 
             try {
                 notificationService.sendDoctorRejection(
-                    booking.getDatLichID(),
-                    request.getLyDoTuChoi()
-                );
+                        booking.getDatLichID(),
+                        request.getLyDoTuChoi());
             } catch (Exception e) {
                 log.error("❌ Failed to send notification: {}", e.getMessage());
             }
@@ -382,22 +428,23 @@ public class BookingService {
             throw new BadRequestException("Không thể hủy lịch hẹn ở trạng thái này");
         }
 
-        // Check time constraint for patient
-        if (isPatient) {
+        // Check time constraint for patient: chỉ áp dụng quy định 24h đối với lịch ĐÃ
+        // XÁC NHẬN
+        if (isPatient && booking.getTrangThai() == TrangThaiDatLich.DA_XAC_NHAN) {
             LocalDateTime appointmentTime = LocalDateTime.of(booking.getNgayKham(), booking.getGioKham());
             long hoursUntilAppointment = java.time.Duration.between(LocalDateTime.now(), appointmentTime).toHours();
 
             if (hoursUntilAppointment < CANCELLATION_HOURS_BEFORE) {
                 throw new BadRequestException(
-                    String.format("Bạn phải hủy lịch trước ít nhất %d giờ", CANCELLATION_HOURS_BEFORE)
-                );
+                        String.format("Bạn chỉ có thể hủy lịch trước ít nhất %d giờ đối với lịch đã xác nhận",
+                                CANCELLATION_HOURS_BEFORE));
             }
         }
 
         // Update booking
         NguoiDung cancelledBy = nguoiDungRepository.findById(currentUserId)
-            .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
-        
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+
         booking.setTrangThai(isPatient ? TrangThaiDatLich.HUY_BOI_BENH_NHAN : TrangThaiDatLich.HUY_BOI_BAC_SI);
         booking.setNguoiHuy(cancelledBy);
         booking.setLyDoHuy(request.getLyDoHuy());
@@ -408,10 +455,9 @@ public class BookingService {
         // Send notification
         try {
             notificationService.sendCancellationNotification(
-                booking.getDatLichID(),
-                currentUserId,
-                request.getLyDoHuy()
-            );
+                    booking.getDatLichID(),
+                    currentUserId,
+                    request.getLyDoHuy());
         } catch (Exception e) {
             log.error("❌ Failed to send notification: {}", e.getMessage());
         }
@@ -474,7 +520,7 @@ public class BookingService {
 
         // Handle cash payment
         if (booking.getPhuongThucThanhToan() == PhuongThucThanhToan.TIEN_MAT &&
-            booking.getTrangThaiThanhToan() == TrangThaiThanhToan.CHUA_THANH_TOAN) {
+                booking.getTrangThaiThanhToan() == TrangThaiThanhToan.CHUA_THANH_TOAN) {
             booking.setTrangThaiThanhToan(TrangThaiThanhToan.THANH_CONG);
             booking.setNgayThanhToan(LocalDateTime.now());
             booking.setMaGiaoDich("CASH_" + System.currentTimeMillis());
@@ -521,7 +567,7 @@ public class BookingService {
     @Transactional
     public BookingResponse confirmCashPaymentByCode(String confirmationCode) {
         DatLichKham booking = datLichKhamRepository.findByMaXacNhan(confirmationCode)
-            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy booking với mã này"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy booking với mã này"));
 
         if (Boolean.TRUE.equals(booking.getIsDeleted())) {
             throw new BadRequestException("Booking đã bị xóa");
@@ -558,7 +604,7 @@ public class BookingService {
     @Transactional(readOnly = true)
     public Page<BookingResponse> getMyBookings(Integer benhNhanID, Pageable pageable) {
         Page<DatLichKham> bookings = datLichKhamRepository
-            .findByBenhNhan_NguoiDungIDOrderByNgayDatDesc(benhNhanID, pageable);
+                .findByBenhNhan_NguoiDungIDOrderByNgayDatDesc(benhNhanID, pageable);
 
         return bookings.map(BookingResponse::of);
     }
@@ -568,27 +614,25 @@ public class BookingService {
      */
     @Transactional(readOnly = true)
     public Page<BookingResponse> getPatientHistory(
-        Integer benhNhanID,
-        LocalDate fromDate,
-        LocalDate toDate,
-        TrangThaiDatLich status,
-        PhuongThucThanhToan paymentMethod,
-        Boolean hasRating,
-        Integer doctorId,
-        Integer facilityId,
-        Pageable pageable
-    ) {
+            Integer benhNhanID,
+            LocalDate fromDate,
+            LocalDate toDate,
+            TrangThaiDatLich status,
+            PhuongThucThanhToan paymentMethod,
+            Boolean hasRating,
+            Integer doctorId,
+            Integer facilityId,
+            Pageable pageable) {
         Page<DatLichKham> bookings = datLichKhamRepository.searchPatientHistory(
-            benhNhanID,
-            fromDate,
-            toDate,
-            status,
-            paymentMethod,
-            hasRating,
-            doctorId,
-            facilityId,
-            pageable
-        );
+                benhNhanID,
+                fromDate,
+                toDate,
+                status,
+                paymentMethod,
+                hasRating,
+                doctorId,
+                facilityId,
+                pageable);
         return bookings.map(BookingResponse::of);
     }
 
@@ -598,11 +642,11 @@ public class BookingService {
     @Transactional(readOnly = true)
     public List<BookingResponse> getDoctorAppointments(Integer bacSiID, LocalDate ngayKham) {
         List<DatLichKham> bookings = datLichKhamRepository
-            .findByBacSi_BacSiIDAndNgayKhamOrderByGioKhamAsc(bacSiID, ngayKham);
+                .findByBacSi_BacSiIDAndNgayKhamOrderByGioKhamAsc(bacSiID, ngayKham);
 
         return bookings.stream()
-            .map(BookingResponse::of)
-            .toList();
+                .map(BookingResponse::of)
+                .toList();
     }
 
     /**
@@ -610,39 +654,37 @@ public class BookingService {
      */
     @Transactional(readOnly = true)
     public Page<BookingResponse> getDoctorHistory(
-        Integer bacSiID,
-        LocalDate fromDate,
-        LocalDate toDate,
-        TrangThaiDatLich status,
-        PhuongThucThanhToan paymentMethod,
-        Boolean hasRating,
-        Integer patientId,
-        Integer facilityId,
-        Pageable pageable
-    ) {
+            Integer bacSiID,
+            LocalDate fromDate,
+            LocalDate toDate,
+            TrangThaiDatLich status,
+            PhuongThucThanhToan paymentMethod,
+            Boolean hasRating,
+            Integer patientId,
+            Integer facilityId,
+            Pageable pageable) {
         Page<DatLichKham> bookings = datLichKhamRepository.searchDoctorHistory(
-            bacSiID,
-            fromDate,
-            toDate,
-            status,
-            paymentMethod,
-            hasRating,
-            patientId,
-            facilityId,
-            pageable
-        );
+                bacSiID,
+                fromDate,
+                toDate,
+                status,
+                paymentMethod,
+                hasRating,
+                patientId,
+                facilityId,
+                pageable);
         return bookings.map(BookingResponse::of);
     }
 
     /**
-     * Lấy lịch làm việc thực tế của 1 bác sĩ trong khoảng ngày (cho bệnh nhân/ bác sĩ xem)
+     * Lấy lịch làm việc thực tế của 1 bác sĩ trong khoảng ngày (cho bệnh nhân/ bác
+     * sĩ xem)
      */
     @Transactional(readOnly = true)
     public List<DoctorScheduleItemResponse> getDoctorSchedule(
-        Integer bacSiId,
-        LocalDate fromDate,
-        LocalDate toDate
-    ) {
+            Integer bacSiId,
+            LocalDate fromDate,
+            LocalDate toDate) {
         LocalDate from = fromDate != null ? fromDate : LocalDate.now();
         LocalDate to = toDate != null ? toDate : from.plusDays(6);
 
@@ -654,28 +696,27 @@ public class BookingService {
         }
 
         BacSi doctor = bacSiRepository.findById(bacSiId)
-            .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại"));
         if (Boolean.FALSE.equals(doctor.getTrangThaiCongViec())) {
             throw new BadRequestException("Bác sĩ hiện không nhận khám");
         }
 
         List<LichLamViecMacDinh> defaultSchedules = lichLamViecMacDinhRepository.findAllActive()
-            .stream()
-            .filter(LichLamViecMacDinh::getIsActive)
-            .toList();
+                .stream()
+                .filter(LichLamViecMacDinh::getIsActive)
+                .toList();
         Map<Integer, List<LichLamViecMacDinh>> scheduleByThu = defaultSchedules.stream()
-            .collect(Collectors.groupingBy(LichLamViecMacDinh::getThuTrongTuan));
+                .collect(Collectors.groupingBy(LichLamViecMacDinh::getThuTrongTuan));
 
         List<BacSiNgayNghi> leaves = bacSiNgayNghiRepository.findApprovedLeavesInRange(bacSiId, from, to);
 
         // Các trạng thái chiếm slot (kể cả chờ thanh toán online)
         List<TrangThaiDatLich> activeStatuses = Arrays.asList(
-            TrangThaiDatLich.CHO_THANH_TOAN,
-            TrangThaiDatLich.DA_XAC_NHAN_CHO_THANH_TOAN,
-            TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI,
-            TrangThaiDatLich.DA_XAC_NHAN,
-            TrangThaiDatLich.DANG_KHAM
-        );
+                TrangThaiDatLich.CHO_THANH_TOAN,
+                TrangThaiDatLich.DA_XAC_NHAN_CHO_THANH_TOAN,
+                TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI,
+                TrangThaiDatLich.DA_XAC_NHAN,
+                TrangThaiDatLich.DANG_KHAM);
 
         List<DoctorScheduleItemResponse> result = new ArrayList<>();
 
@@ -684,50 +725,48 @@ public class BookingService {
             int thu = convertToThuTrongTuan(currentDate);
             List<LichLamViecMacDinh> schedulesForDay = scheduleByThu.getOrDefault(thu, Collections.emptyList());
 
-            boolean leaveFullDay = leaves.stream().anyMatch(n ->
-                (n.getLoaiNghi() == LoaiNghi.NGAY_CU_THE &&
+            boolean leaveFullDay = leaves.stream().anyMatch(n -> (n.getLoaiNghi() == LoaiNghi.NGAY_CU_THE &&
                     currentDate.equals(n.getNgayNghiCuThe())) ||
-                // Nghỉ ca cụ thể nhưng ca = null => nghỉ cả ngày đó
-                (n.getLoaiNghi() == LoaiNghi.CA_CU_THE &&
-                    n.getCa() == null &&
-                    currentDate.equals(n.getNgayNghiCuThe())) ||
-                // Nghỉ hàng tuần với ca = null => nghỉ cả ngày của thứ đó
-                (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN &&
-                    n.getCa() == null &&
-                    Objects.equals(n.getThuTrongTuan(), thu))
-            );
+            // Nghỉ ca cụ thể nhưng ca = null => nghỉ cả ngày đó
+                    (n.getLoaiNghi() == LoaiNghi.CA_CU_THE &&
+                            n.getCa() == null &&
+                            currentDate.equals(n.getNgayNghiCuThe()))
+                    ||
+                    // Nghỉ hàng tuần với ca = null => nghỉ cả ngày của thứ đó
+                    (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN &&
+                            n.getCa() == null &&
+                            Objects.equals(n.getThuTrongTuan(), thu)));
 
             for (LichLamViecMacDinh schedule : schedulesForDay) {
                 boolean onLeave = leaveFullDay || isLeaveForShift(leaves, currentDate, thu, schedule.getCa());
 
                 List<LocalTime> bookedTimes = datLichKhamRepository.findBookedTimeSlots(
-                    bacSiId,
-                    currentDate,
-                    schedule.getCa(),
-                    activeStatuses
-                );
+                        bacSiId,
+                        currentDate,
+                        schedule.getCa(),
+                        activeStatuses);
 
                 int totalSlots = calculateTotalSlots(schedule.getThoiGianBatDau(), schedule.getThoiGianKetThuc());
                 int remainingSlots = Math.max(totalSlots - bookedTimes.size(), 0);
 
                 DoctorScheduleItemResponse item = DoctorScheduleItemResponse.builder()
-                    .ngay(currentDate)
-                    .thu(thu)
-                    .tenThu(getTenThu(thu))
-                    .ca(schedule.getCa())
-                    .tenCa(schedule.getCa().getTenCa())
-                    .gioBatDau(DoctorScheduleItemResponse.formatTime(schedule.getThoiGianBatDau()))
-                    .gioKetThuc(DoctorScheduleItemResponse.formatTime(schedule.getThoiGianKetThuc()))
-                    .isOnLeave(onLeave)
-                    .loaiNghi(resolveLoaiNghi(leaves, currentDate, thu, schedule.getCa(), leaveFullDay))
-                    .ghiChuNghi(resolveLeaveNote(leaves, currentDate, thu, schedule.getCa(), leaveFullDay))
-                    .soSlotDaDat(bookedTimes.size())
-                    .tongSlot(totalSlots)
-                    .slotConLai(remainingSlots)
-                    .gioDaDat(bookedTimes.stream().map(DoctorScheduleItemResponse::formatTime).toList())
-                    // Còn nhận lịch nếu không nghỉ và còn slot trống
-                    .available(!onLeave && remainingSlots > 0)
-                    .build();
+                        .ngay(currentDate)
+                        .thu(thu)
+                        .tenThu(getTenThu(thu))
+                        .ca(schedule.getCa())
+                        .tenCa(schedule.getCa().getTenCa())
+                        .gioBatDau(DoctorScheduleItemResponse.formatTime(schedule.getThoiGianBatDau()))
+                        .gioKetThuc(DoctorScheduleItemResponse.formatTime(schedule.getThoiGianKetThuc()))
+                        .isOnLeave(onLeave)
+                        .loaiNghi(resolveLoaiNghi(leaves, currentDate, thu, schedule.getCa(), leaveFullDay))
+                        .ghiChuNghi(resolveLeaveNote(leaves, currentDate, thu, schedule.getCa(), leaveFullDay))
+                        .soSlotDaDat(bookedTimes.size())
+                        .tongSlot(totalSlots)
+                        .slotConLai(remainingSlots)
+                        .gioDaDat(bookedTimes.stream().map(DoctorScheduleItemResponse::formatTime).toList())
+                        // Còn nhận lịch nếu không nghỉ và còn slot trống
+                        .available(!onLeave && remainingSlots > 0)
+                        .build();
 
                 result.add(item);
             }
@@ -741,33 +780,32 @@ public class BookingService {
      */
     @Transactional(readOnly = true)
     public Page<BookingResponse> getAdminHistory(
-        LocalDate fromDate,
-        LocalDate toDate,
-        TrangThaiDatLich status,
-        PhuongThucThanhToan paymentMethod,
-        Boolean hasRating,
-        Integer doctorId,
-        Integer patientId,
-        Integer facilityId,
-        Pageable pageable
-    ) {
+            LocalDate fromDate,
+            LocalDate toDate,
+            TrangThaiDatLich status,
+            PhuongThucThanhToan paymentMethod,
+            Boolean hasRating,
+            Integer doctorId,
+            Integer patientId,
+            Integer facilityId,
+            Pageable pageable) {
         Page<DatLichKham> bookings = datLichKhamRepository.searchAdminHistory(
-            fromDate,
-            toDate,
-            status,
-            paymentMethod,
-            hasRating,
-            doctorId,
-            patientId,
-            facilityId,
-            pageable
-        );
+                fromDate,
+                toDate,
+                status,
+                paymentMethod,
+                hasRating,
+                doctorId,
+                patientId,
+                facilityId,
+                pageable);
         return bookings.map(BookingResponse::of);
     }
 
     /**
      * Tìm danh sách slot trống cho 1 bác sĩ/ngày/ca
-     * Lưu ý: dựa trên lịch mặc định toàn viện + nghỉ đã duyệt; chưa có lịch riêng từng bác sĩ
+     * Lưu ý: dựa trên lịch mặc định toàn viện + nghỉ đã duyệt; chưa có lịch riêng
+     * từng bác sĩ
      */
     @Transactional(readOnly = true)
     public AvailableSlotsResponse searchAvailableSlots(SearchAvailableSlotsRequest request) {
@@ -775,7 +813,7 @@ public class BookingService {
         validateBookingDate(request.getNgayKham());
 
         BacSi doctor = bacSiRepository.findById(request.getBacSiID())
-            .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại"));
         if (!Boolean.TRUE.equals(doctor.getTrangThaiCongViec())) {
             throw new BadRequestException("Bác sĩ hiện không nhận khám");
         }
@@ -783,22 +821,20 @@ public class BookingService {
         int thu = convertToThuTrongTuan(request.getNgayKham());
         // Lấy lịch mặc định theo thứ + ca
         LichLamViecMacDinh schedule = lichLamViecMacDinhRepository.findByThuAndCa(thu, request.getCa())
-            .orElseThrow(() -> new BadRequestException("Bác sĩ không làm việc ca này theo lịch mặc định"));
+                .orElseThrow(() -> new BadRequestException("Bác sĩ không làm việc ca này theo lịch mặc định"));
 
         // Lấy nghỉ trong ngày này (đủ cho 1 ngày)
         List<BacSiNgayNghi> leaves = bacSiNgayNghiRepository.findApprovedLeavesOnDate(
-            request.getBacSiID(),
-            request.getNgayKham(),
-            thu
-        );
+                request.getBacSiID(),
+                request.getNgayKham(),
+                thu);
 
         List<TrangThaiDatLich> activeStatuses = Arrays.asList(
-            TrangThaiDatLich.CHO_THANH_TOAN,
-            TrangThaiDatLich.DA_XAC_NHAN_CHO_THANH_TOAN,
-            TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI,
-            TrangThaiDatLich.DA_XAC_NHAN,
-            TrangThaiDatLich.DANG_KHAM
-        );
+                TrangThaiDatLich.CHO_THANH_TOAN,
+                TrangThaiDatLich.DA_XAC_NHAN_CHO_THANH_TOAN,
+                TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI,
+                TrangThaiDatLich.DA_XAC_NHAN,
+                TrangThaiDatLich.DANG_KHAM);
 
         return buildAvailableSlotsResponse(doctor, request.getNgayKham(), schedule, leaves, activeStatuses);
     }
@@ -816,7 +852,7 @@ public class BookingService {
         }
 
         BacSi doctor = bacSiRepository.findById(bacSiId)
-            .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại"));
         if (!Boolean.TRUE.equals(doctor.getTrangThaiCongViec())) {
             throw new BadRequestException("Bác sĩ hiện không nhận khám");
         }
@@ -825,18 +861,16 @@ public class BookingService {
         List<LichLamViecMacDinh> schedulesForDay = lichLamViecMacDinhRepository.findByThuTrongTuan(thu);
 
         List<BacSiNgayNghi> leaves = bacSiNgayNghiRepository.findApprovedLeavesOnDate(
-            bacSiId,
-            target,
-            thu
-        );
+                bacSiId,
+                target,
+                thu);
 
         List<TrangThaiDatLich> activeStatuses = Arrays.asList(
-            TrangThaiDatLich.CHO_THANH_TOAN,
-            TrangThaiDatLich.DA_XAC_NHAN_CHO_THANH_TOAN,
-            TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI,
-            TrangThaiDatLich.DA_XAC_NHAN,
-            TrangThaiDatLich.DANG_KHAM
-        );
+                TrangThaiDatLich.CHO_THANH_TOAN,
+                TrangThaiDatLich.DA_XAC_NHAN_CHO_THANH_TOAN,
+                TrangThaiDatLich.CHO_XAC_NHAN_BAC_SI,
+                TrangThaiDatLich.DA_XAC_NHAN,
+                TrangThaiDatLich.DANG_KHAM);
 
         List<AvailableSlotsResponse> result = new ArrayList<>();
         for (LichLamViecMacDinh schedule : schedulesForDay) {
@@ -865,74 +899,76 @@ public class BookingService {
     }
 
     private LoaiNghi resolveLoaiNghi(
-        List<BacSiNgayNghi> leaves,
-        LocalDate date,
-        int thu,
-        CaLamViec ca,
-        boolean leaveFullDay
-    ) {
+            List<BacSiNgayNghi> leaves,
+            LocalDate date,
+            int thu,
+            CaLamViec ca,
+            boolean leaveFullDay) {
         if (leaveFullDay) {
             return LoaiNghi.NGAY_CU_THE;
         }
         return leaves.stream()
-            .filter(n -> {
-                if (n.getLoaiNghi() == LoaiNghi.CA_CU_THE) {
-                    boolean fullDay = date.equals(n.getNgayNghiCuThe()) && n.getCa() == null;
-                    boolean exactShift = date.equals(n.getNgayNghiCuThe()) && ca == n.getCa();
-                    return fullDay || exactShift;
-                }
-                if (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN) {
-                    boolean sameDay = Objects.equals(n.getThuTrongTuan(), thu);
-                    boolean caMatch = n.getCa() == null || n.getCa() == ca;
-                    return sameDay && caMatch;
-                }
-                return false;
-            })
-            .map(BacSiNgayNghi::getLoaiNghi)
-            .findFirst()
-            .orElse(null);
+                .filter(n -> {
+                    if (n.getLoaiNghi() == LoaiNghi.CA_CU_THE) {
+                        boolean fullDay = date.equals(n.getNgayNghiCuThe()) && n.getCa() == null;
+                        boolean exactShift = date.equals(n.getNgayNghiCuThe()) && ca == n.getCa();
+                        return fullDay || exactShift;
+                    }
+                    if (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN) {
+                        boolean sameDay = Objects.equals(n.getThuTrongTuan(), thu);
+                        boolean caMatch = n.getCa() == null || n.getCa() == ca;
+                        return sameDay && caMatch;
+                    }
+                    return false;
+                })
+                .map(BacSiNgayNghi::getLoaiNghi)
+                .findFirst()
+                .orElse(null);
     }
 
     private String resolveLeaveNote(
-        List<BacSiNgayNghi> leaves,
-        LocalDate date,
-        int thu,
-        CaLamViec ca,
-        boolean leaveFullDay
-    ) {
+            List<BacSiNgayNghi> leaves,
+            LocalDate date,
+            int thu,
+            CaLamViec ca,
+            boolean leaveFullDay) {
         return leaves.stream()
-            .filter(n -> {
-                if (leaveFullDay &&
-                    ((n.getLoaiNghi() == LoaiNghi.NGAY_CU_THE && date.equals(n.getNgayNghiCuThe())) ||
-                     (n.getLoaiNghi() == LoaiNghi.CA_CU_THE && date.equals(n.getNgayNghiCuThe()) && n.getCa() == null) ||
-                     (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN && Objects.equals(n.getThuTrongTuan(), thu) && n.getCa() == null))
-                ) {
-                    return true;
-                }
-                if (n.getLoaiNghi() == LoaiNghi.CA_CU_THE) {
-                    boolean fullDay = date.equals(n.getNgayNghiCuThe()) && n.getCa() == null;
-                    boolean exactShift = date.equals(n.getNgayNghiCuThe()) && ca == n.getCa();
-                    return fullDay || exactShift;
-                }
-                if (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN) {
-                    boolean sameDay = Objects.equals(n.getThuTrongTuan(), thu);
-                    boolean caMatch = n.getCa() == null || n.getCa() == ca;
-                    return sameDay && caMatch;
-                }
-                return false;
-            })
-            .map(BacSiNgayNghi::getLyDo)
-            .findFirst()
-            .orElse(null);
+                .filter(n -> {
+                    if (leaveFullDay &&
+                            ((n.getLoaiNghi() == LoaiNghi.NGAY_CU_THE && date.equals(n.getNgayNghiCuThe())) ||
+                                    (n.getLoaiNghi() == LoaiNghi.CA_CU_THE && date.equals(n.getNgayNghiCuThe())
+                                            && n.getCa() == null)
+                                    ||
+                                    (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN
+                                            && Objects.equals(n.getThuTrongTuan(), thu) && n.getCa() == null))) {
+                        return true;
+                    }
+                    if (n.getLoaiNghi() == LoaiNghi.CA_CU_THE) {
+                        boolean fullDay = date.equals(n.getNgayNghiCuThe()) && n.getCa() == null;
+                        boolean exactShift = date.equals(n.getNgayNghiCuThe()) && ca == n.getCa();
+                        return fullDay || exactShift;
+                    }
+                    if (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN) {
+                        boolean sameDay = Objects.equals(n.getThuTrongTuan(), thu);
+                        boolean caMatch = n.getCa() == null || n.getCa() == ca;
+                        return sameDay && caMatch;
+                    }
+                    return false;
+                })
+                .map(BacSiNgayNghi::getLyDo)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
      * Tính số slot trong một ca dựa trên bước slot mặc định
      */
     private int calculateTotalSlots(LocalTime start, LocalTime end) {
-        if (start == null || end == null) return 0;
+        if (start == null || end == null)
+            return 0;
         long minutes = ChronoUnit.MINUTES.between(start, end);
-        if (minutes <= 0) return 0;
+        if (minutes <= 0)
+            return 0;
         return (int) Math.ceil(minutes / (double) DEFAULT_SLOT_MINUTES);
     }
 
@@ -941,7 +977,8 @@ public class BookingService {
      */
     private List<LocalTime> generateSlots(LocalTime start, LocalTime end) {
         List<LocalTime> result = new ArrayList<>();
-        if (start == null || end == null) return result;
+        if (start == null || end == null)
+            return result;
         LocalTime cursor = start;
         while (cursor.isBefore(end)) {
             result.add(cursor);
@@ -962,23 +999,65 @@ public class BookingService {
      * Helper: build response slot trống cho 1 ngày/ca
      */
     private AvailableSlotsResponse buildAvailableSlotsResponse(
-        BacSi doctor,
-        LocalDate ngayKham,
-        LichLamViecMacDinh schedule,
-        List<BacSiNgayNghi> leaves,
-        List<TrangThaiDatLich> activeStatuses
-    ) {
+            BacSi doctor,
+            LocalDate ngayKham,
+            LichLamViecMacDinh schedule,
+            List<BacSiNgayNghi> leaves,
+            List<TrangThaiDatLich> activeStatuses) {
         int thu = convertToThuTrongTuan(ngayKham);
 
-        boolean leaveFullDay = leaves.stream().anyMatch(n ->
-            (n.getLoaiNghi() == LoaiNghi.NGAY_CU_THE && ngayKham.equals(n.getNgayNghiCuThe())) ||
-                (n.getLoaiNghi() == LoaiNghi.CA_CU_THE && n.getCa() == null && ngayKham.equals(n.getNgayNghiCuThe())) ||
-                (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN && n.getCa() == null && Objects.equals(n.getThuTrongTuan(), thu))
-        );
+        boolean leaveFullDay = leaves.stream()
+                .anyMatch(n -> (n.getLoaiNghi() == LoaiNghi.NGAY_CU_THE && ngayKham.equals(n.getNgayNghiCuThe())) ||
+                        (n.getLoaiNghi() == LoaiNghi.CA_CU_THE && n.getCa() == null
+                                && ngayKham.equals(n.getNgayNghiCuThe()))
+                        ||
+                        (n.getLoaiNghi() == LoaiNghi.CA_HANG_TUAN && n.getCa() == null
+                                && Objects.equals(n.getThuTrongTuan(), thu)));
         boolean leaveThisShift = leaveFullDay || isLeaveForShift(leaves, ngayKham, thu, schedule.getCa());
 
         if (leaveThisShift) {
             AvailableSlotsResponse resp = AvailableSlotsResponse.builder()
+                    .bacSiID(doctor.getBacSiID())
+                    .tenBacSi(doctor.getNguoiDung().getHoTen())
+                    .tenChuyenKhoa(doctor.getChuyenKhoa() != null ? doctor.getChuyenKhoa().getTenChuyenKhoa() : null)
+                    .tenTrinhDo(doctor.getTrinhDo() != null ? doctor.getTrinhDo().getTenTrinhDo() : null)
+                    .avatarUrl(doctor.getNguoiDung().getAvatarUrl())
+                    .ngayKham(ngayKham)
+                    .ca(schedule.getCa())
+                    .tenCa(schedule.getCa().getTenCa())
+                    .giaKham(doctor.getGiaKham())
+                    .slots(Collections.emptyList())
+                    .totalSlots(0)
+                    .availableSlots(0)
+                    .bookedSlots(0)
+                    .hasAvailableSlots(false)
+                    .build();
+            resp.calculate();
+            return resp;
+        }
+
+        List<LocalTime> bookedTimes = datLichKhamRepository.findBookedTimeSlots(
+                doctor.getBacSiID(),
+                ngayKham,
+                schedule.getCa(),
+                activeStatuses);
+
+        List<LocalTime> generatedSlots = generateSlots(schedule.getThoiGianBatDau(), schedule.getThoiGianKetThuc());
+        Set<LocalTime> bookedSet = new HashSet<>(bookedTimes);
+
+        List<TimeSlotResponse> slotResponses = generatedSlots.stream()
+                .map(time -> TimeSlotResponse.builder()
+                        .gioKham(time)
+                        .gioBatDau(time)
+                        .gioKetThuc(time.plusMinutes(DEFAULT_SLOT_MINUTES))
+                        .available(!bookedSet.contains(time))
+                        .label(String.format("%s - %s",
+                                DoctorScheduleItemResponse.formatTime(time),
+                                DoctorScheduleItemResponse.formatTime(time.plusMinutes(DEFAULT_SLOT_MINUTES))))
+                        .build())
+                .toList();
+
+        AvailableSlotsResponse response = AvailableSlotsResponse.builder()
                 .bacSiID(doctor.getBacSiID())
                 .tenBacSi(doctor.getNguoiDung().getHoTen())
                 .tenChuyenKhoa(doctor.getChuyenKhoa() != null ? doctor.getChuyenKhoa().getTenChuyenKhoa() : null)
@@ -988,52 +1067,8 @@ public class BookingService {
                 .ca(schedule.getCa())
                 .tenCa(schedule.getCa().getTenCa())
                 .giaKham(doctor.getGiaKham())
-                .slots(Collections.emptyList())
-                .totalSlots(0)
-                .availableSlots(0)
-                .bookedSlots(0)
-                .hasAvailableSlots(false)
+                .slots(slotResponses)
                 .build();
-            resp.calculate();
-            return resp;
-        }
-
-        List<LocalTime> bookedTimes = datLichKhamRepository.findBookedTimeSlots(
-            doctor.getBacSiID(),
-            ngayKham,
-            schedule.getCa(),
-            activeStatuses
-        );
-
-        List<LocalTime> generatedSlots = generateSlots(schedule.getThoiGianBatDau(), schedule.getThoiGianKetThuc());
-        Set<LocalTime> bookedSet = new HashSet<>(bookedTimes);
-
-        List<TimeSlotResponse> slotResponses = generatedSlots.stream()
-            .map(time -> TimeSlotResponse.builder()
-                .gioKham(time)
-                .gioBatDau(time)
-                .gioKetThuc(time.plusMinutes(DEFAULT_SLOT_MINUTES))
-                .available(!bookedSet.contains(time))
-                .label(String.format("%s - %s",
-                    DoctorScheduleItemResponse.formatTime(time),
-                    DoctorScheduleItemResponse.formatTime(time.plusMinutes(DEFAULT_SLOT_MINUTES))
-                ))
-                .build()
-            )
-            .toList();
-
-        AvailableSlotsResponse response = AvailableSlotsResponse.builder()
-            .bacSiID(doctor.getBacSiID())
-            .tenBacSi(doctor.getNguoiDung().getHoTen())
-            .tenChuyenKhoa(doctor.getChuyenKhoa() != null ? doctor.getChuyenKhoa().getTenChuyenKhoa() : null)
-            .tenTrinhDo(doctor.getTrinhDo() != null ? doctor.getTrinhDo().getTenTrinhDo() : null)
-            .avatarUrl(doctor.getNguoiDung().getAvatarUrl())
-            .ngayKham(ngayKham)
-            .ca(schedule.getCa())
-            .tenCa(schedule.getCa().getTenCa())
-            .giaKham(doctor.getGiaKham())
-            .slots(slotResponses)
-            .build();
         response.calculate();
         return response;
     }
@@ -1188,7 +1223,8 @@ public class BookingService {
     @Transactional(readOnly = true)
     public List<DoctorRevenueResponse> getRevenueByDoctor(LocalDate fromDate, LocalDate toDate) {
         // trả tối đa 200 bản ghi để tránh trả quá lớn
-        Page<DoctorRevenueResponse> page = datLichKhamRepository.revenueByDoctor(fromDate, toDate, PageRequest.of(0, 200));
+        Page<DoctorRevenueResponse> page = datLichKhamRepository.revenueByDoctor(fromDate, toDate,
+                PageRequest.of(0, 200));
         return page.getContent();
     }
 
@@ -1210,6 +1246,6 @@ public class BookingService {
 
     private DatLichKham getBookingById(Integer datLichID) {
         return datLichKhamRepository.findById(datLichID)
-            .orElseThrow(() -> new ResourceNotFoundException("Lịch hẹn không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lịch hẹn không tồn tại"));
     }
 }

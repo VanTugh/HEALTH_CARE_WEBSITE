@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from './AuthContext';
-import api, { getAuthToken } from '../utils/api';
 
 const HeaderMain = ({ check }) => {
     const navigate = useNavigate();
@@ -15,10 +14,21 @@ const HeaderMain = ({ check }) => {
     useEffect(() => {
         const fetchUser = async () => {
             if (!isLogin) return;
-            if (!getAuthToken()) return;
+            const token = localStorage.getItem("accessToken");
+            if (!token) return;
 
             try {
-                const { data } = await api.get("/api/auth/me");
+                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+                const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json",
+                        "ngrok-skip-browser-warning": "true",
+                    }
+                });
+                if (!res.ok) throw new Error("Lấy thông tin người dùng thất bại");
+                const data = await res.json();
                 setUser(data);
             } catch (error) {
                 console.error(error);

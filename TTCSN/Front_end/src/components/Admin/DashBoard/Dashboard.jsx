@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import api from "../../../utils/api";
+import axios from "axios";
 import {
     Chart as ChartJS,
     ArcElement,
@@ -35,10 +35,18 @@ export default function BookingStatisticsDashboard() {
     const [doctorMode, setDoctorMode] = useState("revenue");
 
     const [loading, setLoading] = useState(true);
+    const token = localStorage.getItem("accessToken");
 
     const loadMainStats = async () => {
         try {
-            const res = await api.get("/api/bookings/statistics");
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            const res = await axios.get(`${API_BASE_URL}/api/bookings/statistics`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "ngrok-skip-browser-warning": "true",
+                },
+
+            });
             setStats(res.data.data);
         } catch (err) {
             console.error("Lỗi tải thống kê chính:", err);
@@ -47,9 +55,15 @@ export default function BookingStatisticsDashboard() {
 
     const loadTopDoctorsRevenue = async () => {
         try {
-            const res = await api.get(
-                "/api/bookings/statistics/top-doctors/revenue",
-                { params: { size: 10 } }
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            const res = await axios.get(
+                `${API_BASE_URL}/api/bookings/statistics/top-doctors/revenue?size=10`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "ngrok-skip-browser-warning": "true",
+                    },
+                }
             );
             setTopRevenueDoctors(res.data.data || []);
         } catch (err) {
@@ -59,9 +73,15 @@ export default function BookingStatisticsDashboard() {
 
     const loadTopCompletedDoctors = async () => {
         try {
-            const res = await api.get(
-                "/api/bookings/statistics/top-doctors/completed",
-                { params: { size: 10 } }
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            const res = await axios.get(
+                `${API_BASE_URL}/api/bookings/statistics/top-doctors/completed?size=10`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "ngrok-skip-browser-warning": "true",
+                    }
+                }
             );
             setTopCompletedDoctors(res.data.data || []);
         } catch (err) {
@@ -71,8 +91,15 @@ export default function BookingStatisticsDashboard() {
 
     const loadDepartmentRevenue = async () => {
         try {
-            const res = await api.get(
-                "/api/bookings/statistics/revenue/specialties"
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            const res = await axios.get(
+                `${API_BASE_URL}/api/bookings/statistics/revenue/specialties`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "ngrok-skip-browser-warning": "true",
+                    }
+                }
             );
             setDepartmentRevenue(res.data.data || []);
         } catch (err) {

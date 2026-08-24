@@ -1,7 +1,5 @@
-
 DROP DATABASE IF EXISTS DatLichKham;
 CREATE DATABASE DatLichKham CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 USE DatLichKham;
 
 -- ==========================================
@@ -68,7 +66,7 @@ CREATE TABLE NguoiDung (
     INDEX idx_vai_tro (VaiTro),
     INDEX idx_trang_thai (TrangThai)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-select * from NguoiDung nd ;
+
 -- ==========================================
 -- 3. BẢNG TRÌNH ĐỘ
 -- ==========================================
@@ -157,7 +155,6 @@ CREATE TABLE BacSi (
     INDEX idx_chuyen_khoa (ChuyenKhoaID),
     INDEX idx_trinh_do (TrinhDoID)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-select * from BacSi bs ;
 
 -- ==========================================
 -- 6. BẢNG LỊCH LÀM VIỆC MẶC ĐỊNH (TOÀN BỆNH VIỆN)
@@ -260,9 +257,56 @@ CREATE TABLE BacSiNgayNghi (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==========================================
--- 8. BẢNG ĐẶT LỊCH KHÁM (PHASE 2)
+-- 8. BẢNG NGƯỜI THÂN (PHỤC VỤ KHÁM HỘ)
 -- ==========================================
--- Phase 2 Features:
+CREATE TABLE NguoiThan (
+    NguoiThanID INT AUTO_INCREMENT PRIMARY KEY,
+    NguoiDungID INT NOT NULL COMMENT 'Người tạo (chủ tài khoản)',
+    HoTen NVARCHAR(100) NOT NULL,
+    MoiQuanHe NVARCHAR(50) NOT NULL COMMENT 'Vợ, Chồng, Con, Cha, Mẹ, Ông, Bà, Khác',
+    NgaySinh DATE,
+    GioiTinh INT DEFAULT 0 COMMENT '0=Nữ, 1=Nam, 2=Khác',
+    SoDienThoai VARCHAR(20),
+    DiaChi NVARCHAR(255),
+    
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CreatedBy INT,
+    UpdatedBy INT,
+    IsDeleted BIT DEFAULT 0,
+    DeletedAt DATETIME,
+    DeletedBy INT,
+    
+    FOREIGN KEY (NguoiDungID) REFERENCES NguoiDung(NguoiDungID) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- BẢNG KHUYENMAI (VOUCHER/COUPON)
+-- ==========================================
+CREATE TABLE KhuyenMai (
+    KhuyenMaiID INT AUTO_INCREMENT PRIMARY KEY,
+    MaVoucher VARCHAR(50) UNIQUE NOT NULL,
+    TenKhuyenMai NVARCHAR(255) NOT NULL,
+    PhanTramGiam DECIMAL(5,2) NOT NULL COMMENT 'Phần trăm giảm (VD: 10.0 = 10%)',
+    GiamToiDa DECIMAL(18,2) NOT NULL COMMENT 'Số tiền giảm tối đa (VD: 50000)',
+    SoLuong INT DEFAULT 0 COMMENT 'Số slot còn lại có thể dùng',
+    NgayBatDau DATETIME NOT NULL,
+    NgayKetThuc DATETIME NOT NULL,
+    TrangThai BIT DEFAULT 1 COMMENT '1 = Khả dụng, 0 = Đã vô hiệu hóa',
+    
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CreatedBy INT,
+    UpdatedBy INT,
+    IsDeleted BIT DEFAULT 0,
+    DeletedAt DATETIME,
+    DeletedBy INT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- 9. BẢNG ĐẶT LỊCH KHÁM (PHASE 2 + PHASE 3)
+-- ==========================================
+-- Phase 2 & 3 Features:
 -- - VNPay/MoMo/ZaloPay integration
 -- - Doctor confirmation workflow (Bác sĩ xác nhận/từ chối)
 -- - Reminder system (Nhắc nhở trước 24h)
@@ -273,7 +317,8 @@ CREATE TABLE DatLichKham (
     DatLichID INT AUTO_INCREMENT PRIMARY KEY,
     
     -- ========== THÔNG TIN CƠ BẢN ==========
-    BenhNhanID INT NOT NULL,
+    BenhNhanID INT NOT NULL COMMENT 'Chủ tài khoản đặt lịch',
+    NguoiThanID INT COMMENT 'NULL nếu tự đặt cho mình, có giá trị nếu đặt hộ',
     BacSiID INT NOT NULL,
     CoSoID INT NOT NULL DEFAULT 1,
     NgayKham DATE NOT NULL,
@@ -307,6 +352,8 @@ CREATE TABLE DatLichKham (
     MaGiaoDich VARCHAR(100) COMMENT 'Transaction ID từ VNPay/MoMo/ZaloPay',
     NgayThanhToan DATETIME,
     ThongTinThanhToan TEXT COMMENT 'JSON chi tiết thanh toán',
+    KhuyenMaiID INT,
+    TienGiamGia DECIMAL(18,2) DEFAULT 0.00,
     
     -- ========== XÁC NHẬN BÁC SĨ ==========
     NgayBacSiXacNhan DATETIME COMMENT 'Thời gian bác sĩ xác nhận',
@@ -354,6 +401,8 @@ CREATE TABLE DatLichKham (
     
     -- ========== FOREIGN KEYS ==========
     FOREIGN KEY (BenhNhanID) REFERENCES NguoiDung(NguoiDungID),
+    FOREIGN KEY (NguoiThanID) REFERENCES NguoiThan(NguoiThanID) ON DELETE SET NULL,
+    FOREIGN KEY (KhuyenMaiID) REFERENCES KhuyenMai(KhuyenMaiID) ON DELETE SET NULL,
     FOREIGN KEY (BacSiID) REFERENCES BacSi(BacSiID),
     FOREIGN KEY (CoSoID) REFERENCES CoSoYTe(CoSoID),
     FOREIGN KEY (NguoiHuy) REFERENCES NguoiDung(NguoiDungID),
@@ -1323,235 +1372,9 @@ select * from NguoiDung;
 -- SET SQL_SAFE_UPDATES = 0;
 -- SET FOREIGN_KEY_CHECKS = 0;
 
--- ---------------------------------------------------
--- ----------------- THÊM DỮ LIỆU ĐỂ TEST RAG --------
--- ---------------------------------------------------
--- Thêm cơ sở y tế mặc định (ID = 1)
-INSERT INTO CoSoYTe (CoSoID, TenCoSo, DiaChi, SoDienThoai) 
-VALUES (1, 'Bệnh viện Đa khoa Quốc tế Hà Nội', '123 Đường Giải Phóng, Hai Bà Trưng, Hà Nội', '0243123456')
-ON DUPLICATE KEY UPDATE TenCoSo=TenCoSo;
 
--- Thêm các trình độ mặc định
-INSERT INTO TrinhDo (TrinhDoID, TenTrinhDo, GiaKham, ThuTuUuTien) VALUES
-(1, 'Thạc sĩ, Bác sĩ', 200000.00, 1),
-(2, 'Bác sĩ Chuyên khoa I', 250000.00, 2),
-(3, 'Bác sĩ Chuyên khoa II', 350000.00, 3),
-(4, 'Phó Giáo sư, Tiến sĩ', 500000.00, 4)
-ON DUPLICATE KEY UPDATE TenTrinhDo=TenTrinhDo;
 
-INSERT INTO ChuyenKhoa (ChuyenKhoaID, CoSoID, TenChuyenKhoa, MoTa) VALUES
-(1, 1, 'Khoa Nội Thần kinh', 'Chuyên trị đau đầu, mất ngủ, rối loạn tiền đình, chóng mặt, đột quỵ, suy giảm trí nhớ.'),
-(2, 1, 'Khoa Tiêu hóa', 'Chuyên trị đau dạ dày, đại tràng, trào ngược dạ dày thực quản, đầy hơi, khó tiêu.'),
-(3, 1, 'Khoa Nhi', 'Khám và điều trị các bệnh lý trẻ em, ho sốt, sổ mũi, biếng ăn, suy dinh dưỡng nhi.'),
-(4, 1, 'Khoa Tâm thần', 'Chuyên trị trầm cảm, lo âu, stress kéo dài, mất ngủ kinh niên, rối loạn cảm xúc.'),
-(5, 1, 'Khoa Tim mạch', 'Chuyên trị cao huyết áp, đau thắt ngực, rối loạn nhịp tim, xơ vữa động mạch.'),
-(6, 1, 'Khoa Da liễu', 'Chuyên trị mụn trứng cá, viêm da cơ địa, dị ứng, nấm da, rụng tóc, chàm.'),
-(7, 1, 'Khoa Cơ Xương Khớp', 'Chuyên trị thoái hóa cột sống, thoát vị đĩa đệm, đau khớp gối, gout, viêm khớp.'),
-(8, 1, 'Khoa Tai Mũi Họng', 'Chuyên trị viêm xoang, viêm họng hạt, ù tai, ho kéo dài, viêm VA.'),
-(9, 1, 'Khoa Nội tiết', 'Chuyên trị tiểu đường (đái tháo đường), cường giáp, suy giáp, rối loạn chuyển hóa.'),
-(10, 1, 'Khoa Dinh dưỡng', 'Tư vấn chế độ ăn uống cho người béo phì, giảm cân, tăng cân, thực đơn cho người tiểu đường.')
-ON DUPLICATE KEY UPDATE 
-    CoSoID = VALUES(CoSoID),
-    TenChuyenKhoa = VALUES(TenChuyenKhoa),
-    MoTa = VALUES(MoTa);
 
-INSERT INTO NguoiDung (NguoiDungID, HoTen, Email, MatKhau, SoDienThoai, VaiTro, GioiTinh) VALUES
-(11, 'Nguyễn Văn An', 'an.nguyen@hospital.com', 'hash_pass', '0912345601', 'BacSi', 1),
-(12, 'Lê Thị Bình', 'binh.le@hospital.com', 'hash_pass', '0912345602', 'BacSi', 0),
-(13, 'Trần Quốc Cường', 'cuong.tran@hospital.com', 'hash_pass', '0912345603', 'BacSi', 1),
-(14, 'Phạm Minh Đức', 'duc.pham@hospital.com', 'hash_pass', '0912345604', 'BacSi', 1),
-(15, 'Hoàng Lan Hương', 'huong.hoang@hospital.com', 'hash_pass', '0912345605', 'BacSi', 0),
-(16, 'Đỗ Hùng Khang', 'khang.do@hospital.com', 'hash_pass', '0912345606', 'BacSi', 1),
-(17, 'Ngô Quang Long', 'long.ngo@hospital.com', 'hash_pass', '0912345607', 'BacSi', 1),
-(18, 'Vũ Thị Mai', 'mai.vu@hospital.com', 'hash_pass', '0912345608', 'BacSi', 0),
-(19, 'Đặng Tài Nam', 'nam.dang@hospital.com', 'hash_pass', '0912345609', 'BacSi', 1),
-(20, 'Bùi Tuyết Nhung', 'nhung.bui@hospital.com', 'hash_pass', '0912345610', 'BacSi', 0);
-
-INSERT INTO BacSi (BacSiID, ChuyenKhoaID, TrinhDoID, SoNamKinhNghiem, GioiThieu, QuaTrinhDaoTao, KinhNghiemLamViec, GiaKham) VALUES
--- 1. Khoa Thần kinh (ID=1) - PGS.TS (ID=4)
-(11, 1, 4, 25, 
- 'Chuyên gia đầu ngành về điều trị đau nửa đầu kinh niên, mất ngủ kéo dài và rối loạn tiền đình nặng.', 
- 'Tốt nghiệp Tiến sĩ Y khoa tại Đại học Y Hà Nội, tu nghiệp chuyên sâu tại Pháp.', 
- 'Nguyên Trưởng khoa Thần kinh tại Bệnh viện Bạch Mai với hơn 20 năm cống hiến.', 
- 500000.00),
-
--- 2. Khoa Tiêu hóa (ID=2) - BSCKII (ID=3)
-(12, 2, 3, 18, 
- 'Chuyên điều trị dứt điểm viêm loét dạ dày HP, trào ngược dịch dạ dày, viêm đại tràng co thắt.', 
- 'Tốt nghiệp Bác sĩ Chuyên khoa II tại Đại học Y Dược TP.HCM.', 
- 'Phó trưởng khoa Tiêu hóa Bệnh viện Đại học Y Hà Nội.', 
- 350000.00),
-
--- 3. Khoa Nhi (ID=3) - Thạc sĩ (ID=1)
-(13, 3, 1, 8, 
- 'Bác sĩ tâm lý, nhẹ nhàng, chuyên trị các bệnh ho sốt, sổ mũi, biếng ăn và chậm tăng cân ở trẻ sơ sinh và trẻ nhỏ.', 
- 'Tốt nghiệp Thạc sĩ Nhi khoa tại Đại học Y Hà Nội.', 
- 'Bác sĩ điều trị tại khoa Nhi - Bệnh viện Nhi Trung ương.', 
- 200000.00),
-
--- 4. Khoa Tâm thần (ID=4) - BSCKI (ID=2)
-(14, 4, 2, 12, 
- 'Chuyên tham vấn và điều trị tâm lý cho người gặp tình trạng áp lực công việc (stress), trầm cảm, lo âu, rối loạn giấc ngủ ở người trẻ.', 
- 'Tốt nghiệp Bác sĩ Chuyên khoa I chuyên ngành Tâm thần tại Đại học Y Hà Nội.', 
- 'Bác sĩ điều trị tại Viện Sức khỏe Tâm thần Quốc gia.', 
- 250000.00),
-
--- 5. Khoa Tim mạch (ID=5) - PGS.TS (ID=4)
-(15, 5, 4, 30, 
- 'Chuyên khám và điều trị chuyên sâu bệnh lý cao huyết áp, rối loạn nhịp tim, đau thắt ngực và tầm soát nguy cơ đột quỵ.', 
- 'Tốt nghiệp Tiến sĩ tại Đức, thành viên Hội Tim mạch Việt Nam.', 
- 'Cố vấn chuyên môn cao cấp khoa Tim mạch Bệnh viện Tim Hà Nội.', 
- 600000.00),
-
--- 6. Khoa Da liễu (ID=6) - Thạc sĩ (ID=1)
-(16, 6, 1, 6, 
- 'Chuyên trị mụn nội tiết nặng, viêm da cơ địa dị ứng, chàm nấm và các bệnh lý rụng tóc, chăm sóc da khoa học.', 
- 'Tốt nghiệp Thạc sĩ Da liễu tại Đại học Y Hà Nội.', 
- 'Bác sĩ hợp tác chuyên môn tại Bệnh viện Da liễu Trung ương.', 
- 200000.00),
-
--- 7. Khoa Cơ Xương Khớp (ID=7) - BSCKII (ID=3)
-(17, 7, 3, 20, 
- 'Chuyên trị thoát vị đĩa đệm cột sống cổ và thắt lưng không phẫu thuật, viêm khớp gout, thoái hóa khớp gối nặng.', 
- 'Tốt nghiệp Bác sĩ Chuyên khoa II ngành Chấn thương chỉnh hình.', 
- 'Nguyên bác sĩ khoa Cơ xương khớp Bệnh viện Việt Đức.', 
- 400000.00),
-
--- 8. Khoa Tai Mũi Họng (ID=8) - BSCKI (ID=2)
-(18, 8, 2, 10, 
- 'Chuyên khám điều trị viêm xoang mũi dị ứng, viêm họng hạt mạn tính, viêm tai giữa và khản tiếng kéo dài.', 
- 'Tốt nghiệp Bác sĩ Chuyên khoa I Tai Mũi Họng.', 
- 'Bác sĩ chính tại khoa Tai Mũi Họng Bệnh viện Tai Mũi Họng Trung ương.', 
- 250000.00),
-
--- 9. Khoa Nội tiết (ID=9) - BSCKII (ID=3)
-(19, 9, 3, 15, 
- 'Chuyên theo dõi và lập phác đồ điều trị cho bệnh nhân tiểu đường tuýp 1, tiểu đường tuýp 2, suy giáp và cường giáp.', 
- 'Tốt nghiệp Bác sĩ Chuyên khoa II ngành Nội tiết chuyển hóa.', 
- 'Bác sĩ điều trị khoa Nội tiết Bệnh viện Nội tiết Trung ương.', 
- 350000.00),
-
--- 10. Khoa Dinh dưỡng (ID=10) - Thạc sĩ (ID=1)
-(20, 10, 1, 7, 
- 'Chuyên tư vấn thiết kế thực đơn khoa học cho người muốn giảm cân an toàn, người béo phì, hoặc người bị tiểu đường cần kiêng khem.', 
- 'Tốt nghiệp Thạc sĩ Dinh dưỡng cộng đồng tại Viện Dinh dưỡng Quốc gia.', 
- 'Chuyên gia tư vấn dinh dưỡng lâm sàng tại Bệnh viện Đa khoa Quốc tế.', 
- 200000.00);
-
-SELECT 
-    b.BacSiID,
-    n.HoTen AS TenBacSi,
-    n.GioiTinh,
-    ck.TenChuyenKhoa,
-    td.TenTrinhDo,
-    COALESCE(b.GiaKham, td.GiaKham) AS GiaKhamThucTe,
-    b.SoNamKinhNghiem,
-    b.GioiThieu,
-    b.QuaTrinhDaoTao,
-    b.KinhNghiemLamViec,
-    b.ThanhTich,
-    b.ChungChi,
-    cs.TenCoSo,
-    cs.DiaChi AS DiaChiCoSo,
-    -- 1. Gộp danh sách lịch làm việc mặc định trong tuần (Dạng chuỗi)
-    (SELECT GROUP_CONCAT(CONCAT('Thứ ', l.ThuTrongTuan, ' ca ', l.Ca, ' (', TIME_FORMAT(l.ThoiGianBatDau, '%H:%i'), '-', TIME_FORMAT(l.ThoiGianKetThuc, '%H:%i'), ')') SEPARATOR '; ')
-     FROM LichLamViecMacDinh l 
-     WHERE l.CoSoID = b.ChuyenKhoaID -- Hoặc l.CoSoID = 1 theo thiết kế của bạn
-       AND l.IsActive = 1 AND l.IsDeleted = 0) AS LichLamViecCoDinh,
-    -- 2. Gộp danh sách các ngày nghỉ đã ĐƯỢC DUYỆT sắp tới để AI biết đường né lịch
-    (SELECT GROUP_CONCAT(CONCAT(
-                CASE 
-                    WHEN nn.LoaiNghi = 'NGAY_CU_THE' THEN CONCAT('Ngày ', DATE_FORMAT(nn.NgayNghiCuThe, '%d/%m/%Y'))
-                    WHEN nn.LoaiNghi = 'CA_CU_THE' THEN CONCAT('Ca ', nn.Ca, ' ngày ', DATE_FORMAT(nn.NgayNghiCuThe, '%d/%m/%Y'))
-                    ELSE CONCAT('Thứ ', nn.ThuTrongTuan, ' hàng tuần ca ', COALESCE(nn.Ca, 'Cả ngày'))
-                END, 
-                ' (Lý do: ', nn.LyDo, ')')
-            SEPARATOR '; ')
-     FROM BacSiNgayNghi nn 
-     WHERE nn.BacSiID = b.BacSiID 
-       AND nn.TrangThai = 'DA_DUYET' 
-       AND (nn.NgayNghiCuThe >= CURDATE() OR nn.LoaiNghi = 'CA_HANG_TUAN')
-       AND nn.IsDeleted = 0) AS DanhSachNgayNghi
-FROM BacSi b
-INNER JOIN NguoiDung n ON b.BacSiID = n.NguoiDungID
-INNER JOIN ChuyenKhoa ck ON b.ChuyenKhoaID = ck.ChuyenKhoaID
-INNER JOIN TrinhDo td ON b.TrinhDoID = td.TrinhDoID
-INNER JOIN CoSoYTe cs ON ck.CoSoID = cs.CoSoID
-WHERE b.IsDeleted = 0 AND n.IsDeleted = 0 AND n.TrangThai = 1;
-
-CREATE TABLE IF NOT EXISTS BacSiEmbedding (
-    EmbeddingID INT AUTO_INCREMENT PRIMARY KEY,
-    BacSiID INT NOT NULL UNIQUE, -- Mỗi bác sĩ có 1 vector đại diện
-    
-    -- Lưu mảng Vector dưới dạng JSON Array: [0.012, -0.045, ...]
-    Embedding JSON NOT NULL, 
-    
-    -- Đoạn văn bản tổng hợp đã dùng để Embedding (phục vụ kiểm tra/debug)
-    DocumentText TEXT, 
-    
-    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (BacSiID) REFERENCES BacSi(BacSiID) ON DELETE CASCADE,
-    CONSTRAINT chk_json_embedding CHECK (JSON_VALID(Embedding))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-select * from BacSiEmbedding;
-select * from NguoiDung nd ;
+USE DatLichKham;
+select * from NguoiDung;
 select * from BacSi;
-select * from BacSiNgayNghi bsnn ;
-select * from ChuyenKhoa ck;
-select * from CoSoYTe csy;
-select * from LichLamViecMacDinh llvmd ;
-
-SELECT BacSiID, TrangThaiCongViec, IsDeleted FROM BacSi WHERE BacSiID = 12;
-
--- Nếu TrangThaiCongViec = 0, hãy bật lại bằng câu này:
-UPDATE BacSi SET TrangThaiCongViec = 1 WHERE BacSiID = 12;
--- 1. Kiểm tra trạng thái bác sĩ
-SELECT * FROM BacSi WHERE BacSiID = 12;
-
--- 2. Kiểm tra xem có bị dính lịch nghỉ không
-SELECT * FROM BacSiNgayNghi WHERE BacSiID = 12;
-
-SELECT ck.CoSoID 
-FROM BacSi bs
-JOIN ChuyenKhoa ck ON bs.ChuyenKhoaID = ck.ChuyenKhoaID
-WHERE bs.BacSiID = 12 AND bs.IsDeleted = 0;
-
-SELECT Ca, ThoiGianBatDau, ThoiGianKetThuc 
-FROM LichLamViecMacDinh 
-WHERE CoSoID = 1 
-  AND ThuTrongTuan = 4 
-  AND IsActive = 1 
-  AND IsDeleted = 0
-ORDER BY ThoiGianBatDau ASC;
-
-SELECT GioKham 
-FROM DatLichKham 
-WHERE BacSiID = 12 
-  AND NgayKham = '2026-07-22' 
-  AND TrangThai NOT IN ('HUY_BOI_BAC_SI', 'HUY_BOI_BENH_NHAN', 'HUY_BOI_ADMIN', 'TU_CHOI')
-  AND IsDeleted = 0;
-
-SELECT 
-    l.Ca,
-    l.ThoiGianBatDau,
-    l.ThoiGianKetThuc,
-    d.GioKham AS GioDaDat,
-    d.TrangThai AS TrangThaiBooking
-FROM LichLamViecMacDinh l
-JOIN ChuyenKhoa ck ON l.CoSoID = ck.CoSoID
-JOIN BacSi bs ON bs.ChuyenKhoaID = ck.ChuyenKhoaID
-LEFT JOIN DatLichKham d 
-    ON d.BacSiID = bs.BacSiID 
-   AND d.NgayKham = '2026-07-22'
-   AND d.TrangThai NOT IN ('HUY_BOI_BAC_SI', 'HUY_BOI_BENH_NHAN', 'HUY_BOI_ADMIN', 'TU_CHOI')
-   AND d.IsDeleted = 0
-WHERE bs.BacSiID = 12 
-  AND l.ThuTrongTuan = DAYOFWEEK('2026-07-22') -- MySQL: CN=1, T2=2 ... T4=4
-  AND l.IsActive = 1 
-  AND l.IsDeleted = 0;
-
-select * from DatLichKham;
-

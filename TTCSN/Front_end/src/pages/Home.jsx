@@ -11,8 +11,6 @@ import ListDoctor from '../components/ListDoctor'
 import Remote from '../components/Remote'
 import Suggest from '../components/Suggest'
 import HealthPackageList from '../components/HealthPackageList'
-import AIChatBot from "../components/AIChatBot"
-
 const Home = () => {
     return (
         <div className=''>
@@ -27,8 +25,6 @@ const Home = () => {
             <Remote />
             <Suggest />
             <Footer />
-
-            <AIChatBot />
         </div>
     )
 }

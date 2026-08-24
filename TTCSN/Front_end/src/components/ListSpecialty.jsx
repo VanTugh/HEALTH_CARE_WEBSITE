@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from "react-router-dom";
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
-import api from "../utils/api";
 
 const ListSpecialty = () => {
 
     const [listSpecialty, setListSpecialty] = useState([])
 
     useEffect(() => {
-        api.get("/api/specialties")
-            .then(({ data }) => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        fetch(`${API_BASE_URL}/api/specialties`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "true"
+            },
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("Lỗi lấy dữ liệu");
+                return response.json();
+            })
+            .then(data => {
                 setListSpecialty(data)
             })
             .catch(error => {
@@ -39,7 +49,7 @@ const ListSpecialty = () => {
             <h2 className='text-[24px] md:text-[28px] font-semibold mb-10'>Chuyên khoa</h2>
             <ul className='flex gap-4 md:gap-12 relative'>
                 {listCurrent.map((item) => (
-                    <Link key={item.chuyenKhoaID} to={`/chuyenkhoa/${item.chuyenKhoaID}`} className='flex-1 text-center rounded-2xl border border-gray-200 py-3 md:py-5'>
+                    <Link key={item.id} to={`/chuyenkhoa/${item.chuyenKhoaID}`} className='flex-1 text-center rounded-2xl border border-gray-200 py-3 md:py-5'>
                         <img
                             className='w-full h-[160px] md:h-[216px] object-cover mx-auto rounded-2xl'
                             src={item.anhDaiDien} alt={item.tenChuyenKhoa}

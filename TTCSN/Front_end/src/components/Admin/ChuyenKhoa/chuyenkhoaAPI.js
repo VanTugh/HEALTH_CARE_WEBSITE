@@ -1,8 +1,14 @@
-import api from "../../../utils/api";
+import axios from "axios";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const getAllSpecialties = async () => {
   try {
-    const response = await api.get("/api/specialties");
+    const response = await axios.get(`${API_BASE_URL}/api/specialties`, {
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
+    });
     return response.data;
   } catch (error) {
     console.error(
@@ -13,9 +19,15 @@ export const getAllSpecialties = async () => {
   }
 };
 
-export const createSpecialty = async (data) => {
+export const createSpecialty = async (data, token) => {
   try {
-    const response = await api.post("/api/specialties", data);
+    const response = await axios.post(`${API_BASE_URL}/api/specialties`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
+    });
     return response.data;
   } catch (error) {
     console.error(
@@ -26,9 +38,17 @@ export const createSpecialty = async (data) => {
   }
 };
 
-export const deleteSpecialty = async (id) => {
+export const deleteSpecialty = async (id, token) => {
   try {
-    const response = await api.delete(`/api/specialties/${id}`);
+    const response = await axios.delete(
+      `${API_BASE_URL}/api/specialties/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error(
@@ -39,9 +59,19 @@ export const deleteSpecialty = async (id) => {
   }
 };
 
-export const updateSpecialty = async (id, data) => {
+export const updateSpecialty = async (id, data, token) => {
   try {
-    const response = await api.put(`/api/specialties/${id}`, data);
+    const response = await axios.put(
+      `${API_BASE_URL}/api/specialties/${id}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error(

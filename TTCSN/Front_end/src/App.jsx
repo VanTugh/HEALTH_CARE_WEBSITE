@@ -36,15 +36,16 @@ import ScheduleTimetable from "./components/Admin/LichLamViec/ScheduleTimetable.
 import PatientPage from "./components/Admin/BenhNhan/PatientPage.jsx";
 import DoctorHistoryPage from "./components/DoctorManager/HistoryAppointment/DoctorHistoryPage.jsx";
 import AdminHistoryPage from "./components/Admin/LichSuKham/AdminHistoryPage.jsx"
+import KhuyenMaiManager from "./components/Admin/KhuyenMaiManager.jsx";
+import BaiVietManager from "./components/Admin/BaiVietManager.jsx";
+import CategoryPosts from "./pages/CategoryPosts.jsx";
+import PostDetail from "./pages/PostDetail.jsx";
 import PaymentResult from "./pages/PaymentResult.jsx";
-import AIChatBot from "./components/AIChatBot.jsx";
-import DiabetesPredict from "./components/DiabetesPrediction.jsx"
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        // Trang chu
         <Route path="/" element={<Home />} />
         <Route path="/athousepage" element={<AtHousePage />} />
         <Route path="/athopitalpage" element={<AtHopitalPage />} />
@@ -62,12 +63,12 @@ function App() {
         <Route path="/search" element={<SearchInfor />} />
         <Route path="/hopital" element={<HealthcareCenterCard />} />
         <Route path="/payment-result" element={<PaymentResult />} />
-        // small page
         <Route path="/doctor/:id" element={<Doctor />} />
         <Route path="/chuyenkhoa/:id" element={<SpecialtyDetailPage />} />
         <Route path="/dat-lich" element={<AppointmentBooking />} />
+        <Route path="/category/:categoryName" element={<CategoryPosts />} />
+        <Route path="/post/:id" element={<PostDetail />} />
 
-        // Doctor
         <Route
           path="/bacsi"
           element={
@@ -84,7 +85,6 @@ function App() {
           <Route path="history" element={<DoctorHistoryPage />} />
         </Route>
 
-        // Admin
         <Route
           path="/admin"
           element={
@@ -102,12 +102,11 @@ function App() {
           <Route path="degree" element={<TrinhDoPage />} />
           <Route path="leave" element={<DoctorLeavePage />} />
           <Route path="history" element={<AdminHistoryPage />} />
+          <Route path="vouchers" element={<KhuyenMaiManager />} />
+          <Route path="posts" element={<BaiVietManager />} />
         </Route>
       </Routes>
     </BrowserRouter>
-    
-    // <AIChatBot/>
-    // <DiabetesPredict />
   )
 }
 

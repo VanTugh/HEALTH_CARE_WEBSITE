@@ -6,7 +6,6 @@ import HeaderSub from "./HeaderSub";
 import Footer from "./Footer";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import api, { getAuthToken } from "../utils/api";
 
 const AppointmentBooking = () => {
     const location = useLocation();
@@ -16,6 +15,12 @@ const AppointmentBooking = () => {
 
     const { doctor, date, time, ca } = location.state || {};
     const localUser = JSON.parse(localStorage.getItem("user")) || {};
+
+    const [relatives, setRelatives] = useState([]);
+    const [bookingType, setBookingType] = useState('self');
+    const [voucherCode, setVoucherCode] = useState("");
+    const [appliedVoucher, setAppliedVoucher] = useState(null);
+    const [voucherMsg, setVoucherMsg] = useState({ text: "", type: "" });
 
     const GIA_KHAM_THEO_TRINH_DO = {
         1: 150000,
@@ -27,11 +32,28 @@ const AppointmentBooking = () => {
         7: 800000,
     };
     useEffect(() => {
-        if (!getAuthToken()) {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
             toast.error("Bạn cần đăng nhập để đặt lịch!");
             setTimeout(() => navigate("/loginpage"), 1500);
         } else {
             setIsLoggedIn(true);
+
+            // Lấy danh sách người thân
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            fetch(`${API_BASE_URL}/api/v1/relatives`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'ngrok-skip-browser-warning': 'true'
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        setRelatives(data.data);
+                    }
+                })
+                .catch(err => console.log(err));
         }
     }, [navigate]);
 
@@ -72,6 +94,32 @@ const AppointmentBooking = () => {
         return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
 
+    const handleApplyVoucher = async (e) => {
+        e.preventDefault();
+        if (!voucherCode.trim()) return;
+        setVoucherMsg({ text: "Đang kiểm tra...", type: "info" });
+        try {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            const token = localStorage.getItem('accessToken');
+            const res = await fetch(`${API_BASE_URL}/api/v1/vouchers/validate?code=${voucherCode.trim()}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAppliedVoucher(data.data);
+                setVoucherMsg({ text: data.message, type: "success" });
+            } else {
+                setAppliedVoucher(null);
+                setVoucherMsg({ text: data.message, type: "error" });
+            }
+        } catch (err) {
+            setAppliedVoucher(null);
+            setVoucherMsg({ text: "Lỗi hệ thống khi kiểm tra mã khuyến mãi", type: "error" });
+        }
+    };
+
     const formik = useFormik({
         initialValues: {
             name: localUser.hoTen || "",
@@ -91,8 +139,10 @@ const AppointmentBooking = () => {
             }
 
             setLoading(true);
+            const token = localStorage.getItem("accessToken");
 
             const body = {
+                nguoiThanID: bookingType === 'self' ? null : Number(bookingType),
                 bacSiID: doctor?.bacSiID,
                 ngayKham: date?.slice(0, 10),
                 ca,
@@ -104,10 +154,24 @@ const AppointmentBooking = () => {
                 diUng: null,
                 phuongThucThanhToan: values.payment,
                 onlinePayment: values.payment !== "TIEN_MAT",
+                maKhuyenMai: appliedVoucher ? appliedVoucher.maVoucher : null
             };
 
             try {
-                await api.post("/api/bookings", body);
+                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+                const res = await fetch(`${API_BASE_URL}/api/bookings`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                        "ngrok-skip-browser-warning": "true",
+                    },
+                    body: JSON.stringify(body),
+                });
+
+                if (!res.ok) throw new Error();
+                console.log(body)
+                await res.json();
 
                 notifySuccess();
                 await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -121,8 +185,13 @@ const AppointmentBooking = () => {
         },
     });
 
-    const giaKham =
-        GIA_KHAM_THEO_TRINH_DO[doctor?.trinhDoID] || doctor?.giaKham || 0;
+    const basePrice = GIA_KHAM_THEO_TRINH_DO[doctor?.trinhDoID] || doctor?.giaKham || 500000;
+    let discountAmount = 0;
+    if (appliedVoucher) {
+        discountAmount = basePrice * (appliedVoucher.phanTramGiam / 100);
+        if (discountAmount > appliedVoucher.giamToiDa) discountAmount = appliedVoucher.giamToiDa;
+    }
+    const finalTotal = basePrice - discountAmount;
 
     return (
         <div className="bg-gray-50 min-h-screen relative">
@@ -150,12 +219,21 @@ const AppointmentBooking = () => {
                     </div>
 
                     <div className="mt-6 p-4 bg-sky-50 rounded-lg text-sky-700 border border-gray-300">
-                        <p className="font-semibold">
-                            Giá khám: {formatCurrency(giaKham || 500000)} vnđ
+                        <p className="font-semibold flex justify-between">
+                            <span>Giá khám:</span>
+                            <span>{formatCurrency(basePrice)} vnđ</span>
                         </p>
-                        <p className="text-sm text-gray-600">Phí đặt lịch: Miễn phí</p>
-                        <p className="font-bold mt-2 text-lg text-right">
-                            Tổng cộng: {formatCurrency(giaKham || 500000)} vnđ
+                        {appliedVoucher && (
+                            <p className="font-semibold flex justify-between text-green-600 mt-1">
+                                <span>Giảm giá ({appliedVoucher.phanTramGiam}%):</span>
+                                <span>-{formatCurrency(discountAmount)} vnđ</span>
+                            </p>
+                        )}
+                        <p className="text-sm text-gray-600 mt-1">Phí đặt lịch: Miễn phí</p>
+                        <hr className="my-2 border-sky-200" />
+                        <p className="font-bold mt-2 text-xl flex justify-between text-sky-800">
+                            <span>Tổng cộng:</span>
+                            <span>{formatCurrency(finalTotal)} vnđ</span>
                         </p>
                     </div>
                 </div>
@@ -163,8 +241,51 @@ const AppointmentBooking = () => {
                 <form onSubmit={formik.handleSubmit} className="space-y-4 text-sm">
 
                     <h3 className="font-semibold text-lg text-sky-700 mb-2">
-                        Thông tin người đặt lịch
+                        Thông tin người khám
                     </h3>
+
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">Đặt lịch cho ai?</label>
+                        <select
+                            className="w-full border border-gray-300 p-2 rounded-lg text-gray-700 bg-gray-50 focus:ring-1 focus:ring-sky-500"
+                            value={bookingType}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setBookingType(val);
+
+                                if (val === 'self') {
+                                    formik.setValues({
+                                        ...formik.values,
+                                        name: localUser.hoTen || "",
+                                        gender: localUser.gioiTinh === 1 ? "Nam" : "Nữ",
+                                        phone: localUser.soDienThoai || "",
+                                        birthYear: localUser.ngaySinh?.slice(0, 4) || "",
+                                        address: localUser.diaChi || ""
+                                    });
+                                } else {
+                                    const rel = relatives.find(r => r.nguoiThanID.toString() === val);
+                                    if (rel) {
+                                        formik.setValues({
+                                            ...formik.values,
+                                            name: rel.hoTen,
+                                            gender: rel.gioiTinh === 1 ? "Nam" : "Nữ",
+                                            phone: rel.soDienThoai || localUser.soDienThoai,
+                                            birthYear: rel.ngaySinh ? rel.ngaySinh.slice(0, 4) : "",
+                                            address: rel.diaChi || ""
+                                        });
+                                    }
+                                }
+                            }}
+                            disabled={!isLoggedIn}
+                        >
+                            <option value="self">Cho bản thân tôi ({localUser.hoTen})</option>
+                            {relatives.map(r => (
+                                <option key={r.nguoiThanID} value={r.nguoiThanID}>
+                                    Cho {r.moiQuanHe}: {r.hoTen}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
                     <input
                         type="text"
@@ -280,6 +401,33 @@ const AppointmentBooking = () => {
                             />{" "}
                             VNPay
                         </label>
+                    </div>
+
+                    <div className="mt-4 p-4 border border-teal-200 bg-teal-50 rounded-lg">
+                        <p className="font-medium text-teal-800 mb-2">🎁 Mã giảm giá</p>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                className="flex-1 border border-gray-300 p-2 rounded-lg"
+                                placeholder="Nhập mã (Ví dụ: CHAO_BAN_MOI)"
+                                value={voucherCode}
+                                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                disabled={!isLoggedIn}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleApplyVoucher}
+                                disabled={!isLoggedIn || !voucherCode.trim()}
+                                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition"
+                            >
+                                Áp dụng
+                            </button>
+                        </div>
+                        {voucherMsg.text && (
+                            <p className={`mt-2 text-sm ${voucherMsg.type === 'success' ? 'text-green-600' : voucherMsg.type === 'error' ? 'text-red-500' : 'text-blue-500'}`}>
+                                {voucherMsg.text}
+                            </p>
+                        )}
                     </div>
 
                     <button

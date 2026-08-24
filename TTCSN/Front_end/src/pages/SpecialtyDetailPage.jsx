@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom';
 import HeaderSub from '../components/HeaderSub';
 import Footer from '../components/Footer';
 import DoctorDetail from '../components/Doctor/DoctorDetail';
-import api from '../utils/api';
 
 const SpecialtyDetailPage = () => {
     const { id } = useParams();
@@ -13,15 +12,31 @@ const SpecialtyDetailPage = () => {
 
 
     useEffect(() => {
-        api.get(`/api/specialties/${id}`)
-            .then(({ data }) => setSpecialty(data))
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        fetch(`${API_BASE_URL}/api/specialties/${id}`, {
+            headers: {
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "true",
+            }
+        })
+            .then(res => res.json())
+            .then(data => setSpecialty(data))
             .catch(err => console.error("Lỗi lấy chuyên khoa:", err));
     }, [id]);
 
 
     useEffect(() => {
-        api.get(`/api/doctors/specialty/${id}`)
-            .then(({ data }) => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+        fetch(`${API_BASE_URL}/api/doctors/specialty/${id}`, {
+            headers: {
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "true",
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+
                 const sortedDoctors = [...data].sort(
                     (a, b) => b.trinhDoID - a.trinhDoID
                 );
@@ -32,8 +47,23 @@ const SpecialtyDetailPage = () => {
 
 
     useEffect(() => {
-        api.get("/api/facilities")
-            .then(({ data }) => setCoSoYTeList(data))
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        const token = localStorage.getItem("accessToken");
+
+        fetch(`${API_BASE_URL}/api/facilities`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "true",
+            }
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("Không thể lấy cơ sở y tế");
+                }
+                return res.json();
+            })
+            .then(data => setCoSoYTeList(data))
             .catch(err => console.error("Lỗi lấy cơ sở y tế:", err));
     }, []);
 

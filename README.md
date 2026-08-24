@@ -137,6 +137,7 @@ server.tomcat.threads.max=500
 
 * **Real-time Slot Locking:** Tích hợp giao thức **WebSockets (STOMP)** kết hợp bộ nhớ đệm **Redis** để triển khai tính năng giữ chỗ tạm thời trong 5 phút. Khi User A đang chọn một khung giờ, hệ thống sẽ ngay lập tức bôi xám slot đó trên màn hình của User B theo thời gian thực, tối ưu hóa trải nghiệm người dùng (UX).
 * **Distributed Lock:** Áp dụng khóa phân tán để xử lý triệt để hiện tượng Deadlock tầng Database khi có hàng ngàn lệnh ghi đồng thời vào một bản ghi dữ liệu đơn lẻ.
+<<<<<<< HEAD
 
 ## Hướng dẫn setup AI pipeline
 **Bước 1: Đảm bảo khi clone đã có thêm các file, thư mục như sau**
@@ -223,3 +224,5 @@ lưu ý với AI
     - cd vào ai_assistant
     - chạy python ai_service.py
 ```
+=======
+>>>>>>> phung_tuan_anh

@@ -7,9 +7,9 @@ import ChangePassword from '../components/User/ChangePassword';
 import BookingItem from '../components/User/BookingItem';
 import CancelBookingModal from '../components/User/CancelBookingModal';
 import MedicalHistory from '../components/User/MedicalHistory';
+import RelativeRecords from '../components/User/RelativeRecords';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import api, { getAuthToken } from '../utils/api';
 
 const UserPage = () => {
     const navigate = useNavigate();
@@ -36,15 +36,24 @@ const UserPage = () => {
 
 
     useEffect(() => {
-        if (!getAuthToken()) {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
             setError("Chưa đăng nhập!");
             return;
         }
 
         setLoading(true);
         setError(null);
-        api.get("/api/bookings/my", { params: { page: 0, size: 10 } })
-            .then(({ data }) => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        fetch(`${API_BASE_URL}/api/bookings/my?page=0&size=10`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+                "ngrok-skip-browser-warning": "true",
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
                 console.log(data)
                 if (data.success) {
 
@@ -145,6 +154,12 @@ const UserPage = () => {
                         Lịch sử khám
                     </Link>
                     <Link
+                        className={`${indexPage === 4 ? "border-[#bb4d00] bg-[#f2edea] text-amber-800" : "border-gray-400"} py-3 px-4 border-l-4 hover:bg-gray-100 rounded-[4px] font-medium`}
+                        onClick={() => setIndexPage(4)}
+                    >
+                        Hồ sơ khám hộ
+                    </Link>
+                    <Link
                         className={`${indexPage === 2 ? "border-[#bb4d00] bg-[#f2edea] text-amber-800" : "border-gray-400"} py-3 px-4 border-l-4 hover:bg-gray-100 rounded-[4px] font-medium`}
                         onClick={() => setIndexPage(2)}
                     >
@@ -215,6 +230,8 @@ const UserPage = () => {
                     {indexPage === 2 && <ChangePassword />}
 
                     {indexPage === 3 && <MedicalHistory />}
+
+                    {indexPage === 4 && <RelativeRecords />}
                 </div>
             </div>
 

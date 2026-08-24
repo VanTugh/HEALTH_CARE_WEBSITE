@@ -1,9 +1,10 @@
 import React from 'react'
-import { MdDashboard, MdMiscellaneousServices } from "react-icons/md";
+import { MdDashboard, MdMiscellaneousServices, MdOutlineLoyalty } from "react-icons/md";
 import { FaHospitalAlt, FaStethoscope, FaUserMd, FaRegCalendarAlt, FaGraduationCap } from "react-icons/fa";
 import { FaBusinessTime } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 import { AiOutlineHistory } from "react-icons/ai";
+import { FaEdit } from "react-icons/fa";
 
 const SideBar = ({ danhMuc, index, setIndex, sidebarOpen }) => {
     const icon = [
@@ -16,6 +17,8 @@ const SideBar = ({ danhMuc, index, setIndex, sidebarOpen }) => {
         <FaGraduationCap />,
         <FaBusinessTime />,
         <AiOutlineHistory />,
+        <MdOutlineLoyalty />,
+        <FaEdit />
     ]
 
     const path = [
@@ -28,10 +31,12 @@ const SideBar = ({ danhMuc, index, setIndex, sidebarOpen }) => {
         "/admin/degree",
         "/admin/leave",
         "/admin/history",
+        "/admin/vouchers",
+        "/admin/posts"
     ];
 
     return (
-        <div className={`h-screen pt-[100px] fixed top-0 left-0 bg-[#a35a37] text-white font-bold 
+        <div className={`h-screen pt-[100px] pb-24 overflow-y-auto fixed top-0 left-0 bg-[#a35a37] text-white font-bold 
             transition-all duration-300 ${sidebarOpen ? 'w-[280px]' : 'w-0 overflow-hidden'}`}>
             <ul className='pl-4 py-2'>
                 {danhMuc.map((item, i) => (

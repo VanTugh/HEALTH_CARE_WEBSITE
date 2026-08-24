@@ -2,22 +2,27 @@ import React, { useState, useEffect } from 'react'
 import HeaderSub from '../components/HeaderSub'
 import Footer from '../components/Footer'
 import { Link } from 'react-router-dom'
-import api from '../utils/api'
 
 const DoctorPage = () => {
 
     const [doctors, setDoctors] = useState([])
 
     useEffect(() => {
-        api.get("/api/doctors", {
-            params: {
-                page: 0,
-                size: 50,
-                sortBy: "nguoiDung.hoTen",
-                direction: "asc",
+        const token = localStorage.getItem("accessToken");
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        fetch(`${API_BASE_URL}/api/doctors?page=0&size=50&sortBy=nguoiDung.hoTen&direction=asc`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+                "ngrok-skip-browser-warning": "true"
             },
         })
-            .then(({ data }) => {
+            .then(response => {
+                if (!response.ok) throw new Error("Lỗi lấy dữ liệu");
+                return response.json();
+            })
+            .then(data => {
                 setDoctors(data.content);
             })
             .catch(error => {
@@ -34,7 +39,7 @@ const DoctorPage = () => {
             <div className=' max-w-[1300px] xl:mx-auto mx-5'>
 
                 <p className='pt-5'>
-                    <Link to="/" className='text-blue-400'><i className="fa-solid fa-house"></i></Link>
+                    <Link to="/" className='text-blue-400'><i class="fa-solid fa-house"></i></Link>
                     <span className='mx-1.5 text-blue-400'>/</span>
                     <span className='font-medium'>Danh sách bác sĩ</span>
                 </p>

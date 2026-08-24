@@ -257,9 +257,56 @@ CREATE TABLE BacSiNgayNghi (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==========================================
--- 8. BẢNG ĐẶT LỊCH KHÁM (PHASE 2)
+-- 8. BẢNG NGƯỜI THÂN (PHỤC VỤ KHÁM HỘ)
 -- ==========================================
--- Phase 2 Features:
+CREATE TABLE NguoiThan (
+    NguoiThanID INT AUTO_INCREMENT PRIMARY KEY,
+    NguoiDungID INT NOT NULL COMMENT 'Người tạo (chủ tài khoản)',
+    HoTen NVARCHAR(100) NOT NULL,
+    MoiQuanHe NVARCHAR(50) NOT NULL COMMENT 'Vợ, Chồng, Con, Cha, Mẹ, Ông, Bà, Khác',
+    NgaySinh DATE,
+    GioiTinh INT DEFAULT 0 COMMENT '0=Nữ, 1=Nam, 2=Khác',
+    SoDienThoai VARCHAR(20),
+    DiaChi NVARCHAR(255),
+    
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CreatedBy INT,
+    UpdatedBy INT,
+    IsDeleted BIT DEFAULT 0,
+    DeletedAt DATETIME,
+    DeletedBy INT,
+    
+    FOREIGN KEY (NguoiDungID) REFERENCES NguoiDung(NguoiDungID) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- BẢNG KHUYENMAI (VOUCHER/COUPON)
+-- ==========================================
+CREATE TABLE KhuyenMai (
+    KhuyenMaiID INT AUTO_INCREMENT PRIMARY KEY,
+    MaVoucher VARCHAR(50) UNIQUE NOT NULL,
+    TenKhuyenMai NVARCHAR(255) NOT NULL,
+    PhanTramGiam DECIMAL(5,2) NOT NULL COMMENT 'Phần trăm giảm (VD: 10.0 = 10%)',
+    GiamToiDa DECIMAL(18,2) NOT NULL COMMENT 'Số tiền giảm tối đa (VD: 50000)',
+    SoLuong INT DEFAULT 0 COMMENT 'Số slot còn lại có thể dùng',
+    NgayBatDau DATETIME NOT NULL,
+    NgayKetThuc DATETIME NOT NULL,
+    TrangThai BIT DEFAULT 1 COMMENT '1 = Khả dụng, 0 = Đã vô hiệu hóa',
+    
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CreatedBy INT,
+    UpdatedBy INT,
+    IsDeleted BIT DEFAULT 0,
+    DeletedAt DATETIME,
+    DeletedBy INT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- 9. BẢNG ĐẶT LỊCH KHÁM (PHASE 2 + PHASE 3)
+-- ==========================================
+-- Phase 2 & 3 Features:
 -- - VNPay/MoMo/ZaloPay integration
 -- - Doctor confirmation workflow (Bác sĩ xác nhận/từ chối)
 -- - Reminder system (Nhắc nhở trước 24h)
@@ -270,7 +317,8 @@ CREATE TABLE DatLichKham (
     DatLichID INT AUTO_INCREMENT PRIMARY KEY,
     
     -- ========== THÔNG TIN CƠ BẢN ==========
-    BenhNhanID INT NOT NULL,
+    BenhNhanID INT NOT NULL COMMENT 'Chủ tài khoản đặt lịch',
+    NguoiThanID INT COMMENT 'NULL nếu tự đặt cho mình, có giá trị nếu đặt hộ',
     BacSiID INT NOT NULL,
     CoSoID INT NOT NULL DEFAULT 1,
     NgayKham DATE NOT NULL,
@@ -304,6 +352,8 @@ CREATE TABLE DatLichKham (
     MaGiaoDich VARCHAR(100) COMMENT 'Transaction ID từ VNPay/MoMo/ZaloPay',
     NgayThanhToan DATETIME,
     ThongTinThanhToan TEXT COMMENT 'JSON chi tiết thanh toán',
+    KhuyenMaiID INT,
+    TienGiamGia DECIMAL(18,2) DEFAULT 0.00,
     
     -- ========== XÁC NHẬN BÁC SĨ ==========
     NgayBacSiXacNhan DATETIME COMMENT 'Thời gian bác sĩ xác nhận',
@@ -351,6 +401,8 @@ CREATE TABLE DatLichKham (
     
     -- ========== FOREIGN KEYS ==========
     FOREIGN KEY (BenhNhanID) REFERENCES NguoiDung(NguoiDungID),
+    FOREIGN KEY (NguoiThanID) REFERENCES NguoiThan(NguoiThanID) ON DELETE SET NULL,
+    FOREIGN KEY (KhuyenMaiID) REFERENCES KhuyenMai(KhuyenMaiID) ON DELETE SET NULL,
     FOREIGN KEY (BacSiID) REFERENCES BacSi(BacSiID),
     FOREIGN KEY (CoSoID) REFERENCES CoSoYTe(CoSoID),
     FOREIGN KEY (NguoiHuy) REFERENCES NguoiDung(NguoiDungID),

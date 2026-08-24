@@ -2,14 +2,21 @@ import React, { useState, useEffect } from 'react';
 import HeaderSub from '../components/HeaderSub';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
 
 const MedicalPage = () => {
     const [listMedical, setListMedical] = useState([]);
     const [hopital, setHopital] = useState([]);
     useEffect(() => {
-        api.get("/api/facilities")
-            .then(({ data }) => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        const token = localStorage.getItem("accessToken");
+        fetch(`${API_BASE_URL}/api/facilities`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "ngrok-skip-browser-warning": "true"
+            },
+        })
+            .then(res => res.json())
+            .then(data => {
                 const mapped = data.map(item => ({
                     id: item.coSoID,
                     name: item.tenCoSo,

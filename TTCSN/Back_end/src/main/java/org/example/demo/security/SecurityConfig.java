@@ -1,7 +1,7 @@
 package org.example.demo.security;
 
 import java.util.List;
-import org.springframework.http.HttpMethod;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -118,14 +118,12 @@ public class SecurityConfig {
 				.permitAll()
 
 						// ✅ Public GET endpoints
-						.requestMatchers(
-    HttpMethod.GET,
-    "/api/specialties/**",
-    "/api/degrees/**",
-    "/api/doctors/**",
-    "/api/facilities/**"
-)
-.permitAll()
+						.requestMatchers(org.springframework.http.HttpMethod.GET, "/api/specialties/**",
+								"/api/degrees/**", "/api/doctors/**", "/api/v1/posts/**",
+
+								// 👇 QUAN TRỌNG: mở GET cho cơ sở y tế
+								"/co-so-y-te/**")
+						.permitAll()
 
 						// ❗ Các method khác (POST, PUT, DELETE) vẫn cần login
 						.anyRequest().authenticated());

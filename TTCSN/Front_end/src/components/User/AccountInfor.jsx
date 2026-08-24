@@ -1,15 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import Infor from './Infor';
 import InforForm from './InforForm';
-import api from '../../utils/api';
 
 const AccountInfor = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        api.get("/api/auth/me")
-            .then(({ data }) => setUser(data))
+        const token = localStorage.getItem("accessToken");
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        fetch(`${API_BASE_URL}/api/auth/me`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "true",
+            },
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("Lỗi lấy dữ liệu");
+                return response.json();
+            })
+            .then(data => setUser(data))
             .catch(error => {
                 console.error("Lỗi khi gọi API:", error);
             });

@@ -30,6 +30,14 @@ videos/
 *.mp4
 *.zip
 
+<<<<<<< HEAD
 # AI 
 TTCSN/ai_assistant/.venv/
 TTCSN/ai_assistant/__pycache__/
+=======
+# Các file SQL fix cá nhân / dữ liệu bổ sung
+**/Fix_Admin.sql
+**/Fix_SafeMode.sql
+**/Insert_BacSi.sql
+
+>>>>>>> phung_tuan_anh

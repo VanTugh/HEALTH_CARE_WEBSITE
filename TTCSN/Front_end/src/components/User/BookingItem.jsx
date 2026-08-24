@@ -1,18 +1,38 @@
 import React from "react";
 import { FaCalendarAlt, FaMoneyBill } from "react-icons/fa";
 import { MdCancel } from "react-icons/md";
-import api from "../../utils/api";
 
 const BookingItem = ({ items, onCancel }) => {
     console.log(items)
 
     const handlePayment = async (datLichID) => {
         try {
-            const { data: result } = await api.post("/api/payments/vnpay/create", {
-                datLichID,
-                clientIp: "127.0.0.1",
-            });
+            const token = localStorage.getItem("accessToken");
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            const res = await fetch(
+                `${API_BASE_URL}/api/payments/vnpay/create`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                        "ngrok-skip-browser-warning": "true"
+                    },
+                    body: JSON.stringify({
+                        datLichID,
+                        clientIp: "127.0.0.1"
+                    })
+                }
+            );
 
+            if (!res.ok) {
+                const err = await res.json();
+                console.error(err);
+                alert("Không thể tạo thanh toán");
+                return;
+            }
+
+            const result = await res.json();
             console.log("Payment response:", result);
 
 
@@ -27,8 +47,8 @@ const BookingItem = ({ items, onCancel }) => {
             window.location.href = paymentUrl;
 
         } catch (error) {
-            console.error("Payment error:", error.response?.data || error);
-            alert("Không thể tạo thanh toán");
+            console.error("Payment error:", error);
+            alert("Lỗi khi thanh toán");
         }
     };
 

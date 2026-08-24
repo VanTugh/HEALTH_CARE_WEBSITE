@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import HeaderMain from '../components/HeaderMain';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
 
 const SreachInfor = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -21,18 +20,28 @@ const SreachInfor = () => {
         setError('');
         try {
             setLoading(true);
+            const token = localStorage.getItem('accessToken');
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            let url = '';
 
             if (searchType === 'doctor') {
-                const { data } = await api.get("/api/doctors/search", {
-                    params: { keyword: term, page: 0, size: 10 },
-                });
-                setResults(data.content);
+                url = `${API_BASE_URL}/api/doctors/search?keyword=${encodeURIComponent(term)}&page=0&size=10`;
             } else {
-                const { data } = await api.get("/api/specialties/search", {
-                    params: { keyword: term },
-                });
-                setResults(data);
+                url = `${API_BASE_URL}/api/specialties/search?keyword=${encodeURIComponent(term)}`;
             }
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    "ngrok-skip-browser-warning": "true",
+                },
+            });
+
+            if (!response.ok) throw new Error('Lỗi khi tìm kiếm');
+
+            const data = await response.json();
+            setResults(searchType === 'doctor' ? data.content : data);
         } catch (err) {
             console.error('Lỗi tìm kiếm:', err);
             alert('Có lỗi xảy ra khi tìm kiếm');

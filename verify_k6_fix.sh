@@ -93,3 +93,4 @@ echo "✅ TEST 1 (Đúng format): Phải là 201 Created"
 echo "⚠️  TEST 2 (Sai format):  Phải là 500 JSON parse error"
 echo ""
 echo "🚀 Nếu cả 2 test như kỳ vọng → K6 load test sẽ thành công!"
+

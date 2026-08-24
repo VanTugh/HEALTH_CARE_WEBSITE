@@ -7,12 +7,5 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     allowedHosts: ["jurally-sprightful-booker.ngrok-free.dev"],
-    // Thêm đoạn proxy này để trỏ API về Spring Boot
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      }
-    }
   },
 });

@@ -86,10 +86,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				// VNPay
 				path.startsWith("/api/payments/vnpay") ||
 
-				// 👇 GET cơ sở y tế + facilities
-				("GET".equalsIgnoreCase(method) && (path.startsWith("/co-so-y-te") || path.startsWith("/api/facilities")))
-				|| ("GET".equalsIgnoreCase(method) && (path.startsWith("/api/specialties")
-						|| path.startsWith("/api/degrees") || path.startsWith("/api/doctors")));
+				// 👇 GET cơ sở y tế
+				("GET".equalsIgnoreCase(method) && path.startsWith("/co-so-y-te"));
 	}
 
 	/**

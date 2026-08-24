@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import { Link } from "react-router-dom";
 import nen from "../assets/images/doctor/nen.png";
-import api from "../utils/api";
+import axios from "axios";
 
 const ListDoctor = () => {
 
@@ -14,9 +14,19 @@ const ListDoctor = () => {
     useEffect(() => {
         const fetchDoctors = async () => {
             try {
-                const { data } = await api.get("/api/doctors/top-experienced");
-                console.log(data)
-                setListDoctor(data);
+                const token = localStorage.getItem("token");
+                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+                const res = await axios.get(
+                    `${API_BASE_URL}/api/doctors/top-experienced`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "ngrok-skip-browser-warning": "true"
+                        }
+                    }
+                );
+                console.log(res.data)
+                setListDoctor(res.data);
             } catch (error) {
                 console.error("Lỗi tải danh sách bác sĩ:", error);
             }

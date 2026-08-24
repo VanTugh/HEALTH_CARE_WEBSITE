@@ -2,7 +2,6 @@ import React from 'react'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { ToastContainer, toast } from 'react-toastify';
-import api from '../../utils/api';
 
 const InforForm = ({ user, setUser, setIsEditing }) => {
 
@@ -45,6 +44,8 @@ const InforForm = ({ user, setUser, setIsEditing }) => {
 
         onSubmit: async (values) => {
             try {
+                const token = localStorage.getItem("accessToken");
+
                 const updatedUser = {
                     hoTen: values.hoTen,
                     email: values.email,
@@ -54,14 +55,29 @@ const InforForm = ({ user, setUser, setIsEditing }) => {
                     gioiTinh: Number(values.gioiTinh),
                     avatarUrl: values.avatarUrl
                 };
-                const { data } = await api.put("/api/auth/me", updatedUser);
+                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+                const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                        "ngrok-skip-browser-warning": "true",
+                    },
+                    body: JSON.stringify(updatedUser),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    notifyError();
+                    throw new Error(data?.message || "Cập nhật thất bại!");
+                }
 
                 setUser(data);
                 notifySuccess();
                 setTimeout(() => setIsEditing(false), 1500);
 
             } catch (error) {
-                notifyError();
                 console.error("Lỗi khi cập nhật thông tin:", error);
             }
         }
